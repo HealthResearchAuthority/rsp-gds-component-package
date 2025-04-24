@@ -1,0 +1,49 @@
+name: $(Build.DefinitionName)_$(Build.SourceBranchName)_$(date:yyyyMMdd)$(rev:.r)
+
+trigger:
+  - main
+
+pool:
+  vmImage: "ubuntu-latest"
+
+parameters:
+  - name: devops_library_branch
+    displayName: DevOps Library Branch
+    type: string
+    default: main
+  - name: run_sonarcloud_analysis
+    displayName: Run Sonar Cloud Analysis
+    type: boolean
+    default: true
+  - name: skip_deployment
+    displayName: Skip Deployment
+    type: boolean
+    default: false
+variables:
+  - name: vstsFeed
+    value: "0e030eb0-cb72-4f42-b99a-26e6544271c3/0a3e0ad2-23b6-4e8b-ae12-cd6d01fe97e7"
+  - name: project
+    value: "**/Rsp.Gds.Component.csproj"
+  - name: solution
+    value: "**/*.sln"
+  - name: buildConfiguration
+    value: "Release"
+
+resources:
+  repositories:
+    - repository: library
+      type: github
+      name: 'HealthResearchAuthority/rsp-azure-devops-library'
+      endpoint: AzureDevOpsToGitHubConnection
+      ref: ${{ parameters.devops_library_branch }}
+
+stages:
+  - stage: CustomNuGetPackage
+    displayName: Creating GDS Component NuGet Package
+    jobs:
+    - template: jobs/artifact.yaml@library
+      parameters:
+        run_github_security_scan: false
+        sonar_project_key: HealthResearchAuthority_rsp-gds-component-package
+        sonar_project_name: rsp-gds-component-package
+        run_sonarcloud_analysis: ${{ parameters.run_sonarcloud_analysis }}

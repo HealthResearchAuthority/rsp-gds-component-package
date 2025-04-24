@@ -1,0 +1,54 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<PackageId>Rsp.Gds.Component</PackageId>
+		<Version>1.0.11</Version>
+		<Authors>HRA Technology Team</Authors>
+		<Company>Health Research Authority</Company>
+		<Description>Gds Component package that exposes components.</Description>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<PackageTags>logging;loggermessage;correlationId</PackageTags>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageProjectUrl>https://dev.azure.com/futureiras/Research%20Systems%20Programme/_git/rsp-gds-component-package</PackageProjectUrl>
+		<RepositoryUrl>https://dev.azure.com/futureiras/Research%20Systems%20Programme/_git/rsp-gds-component-package</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<RootNamespace>Rsp.Gds.Component</RootNamespace>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<NoWarn>$(NoWarn);1591</NoWarn>
+		<DebugType>embedded</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+		<ContinuousIntegrationBuild>True</ContinuousIntegrationBuild>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Include="..\..\icon.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Castle.Core.AsyncInterceptor" Version="2.1.0" />
+		<PackageReference Include="Castle.Core" Version="5.1.1" />
+		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.3.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.1" />
+		<PackageReference Include="Microsoft.FeatureManagement" Version="4.0.0" />
+		<PackageReference Include="Microsoft.SourceLink.AzureRepos.Git" Version="8.0.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="NuGet.CommandLine" Version="6.12.2">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+	</ItemGroup>
+</Project>
