@@ -1,37 +1,47 @@
-﻿namespace Rsp.Gds.Component.TagHelpers
+﻿namespace Rsp.Gds.Component.TagHelpers.Base
 {
     [HtmlTargetElement("rsp-gds-input", Attributes = ForAttributeName)]
     public class RspGdsInputTagHelper : TagHelper
     {
         private const string ForAttributeName = "asp-for";
 
-        [HtmlAttributeName(ForAttributeName)] public ModelExpression For { get; set; }
+        [HtmlAttributeName(ForAttributeName)] 
+        public ModelExpression For { get; set; }
 
-        [HtmlAttributeName("label-text")] public string LabelText { get; set; }
+        [HtmlAttributeName("label-text")] 
+        public string LabelText { get; set; }
 
-        [HtmlAttributeName("width-class")] public string WidthClass { get; set; } = "govuk-!-width-one-half";
+        [HtmlAttributeName("width-class")] 
+        public string WidthClass { get; set; } = "govuk-!-width-one-half";
 
-        [HtmlAttributeName("input-type")] public string InputType { get; set; } = "text";
+        [HtmlAttributeName("input-type")] 
+        public string InputType { get; set; } = "text";
 
-        [HtmlAttributeName("autocomplete")] public string Autocomplete { get; set; }
+        [HtmlAttributeName("autocomplete")] 
+        public string Autocomplete { get; set; }
 
-        [HtmlAttributeName("placeholder")] public string Placeholder { get; set; }
+        [HtmlAttributeName("placeholder")] 
+        public string Placeholder { get; set; }
 
-        [HtmlAttributeName("readonly")] public bool Readonly { get; set; } = false;
+        [HtmlAttributeName("readonly")] 
+        public bool Readonly { get; set; } = false;
 
-        [HtmlAttributeName("disabled")] public bool Disabled { get; set; } = false;
+        [HtmlAttributeName("disabled")] 
+        public bool Disabled { get; set; } = false;
 
         [HtmlAttributeName("additional-attributes")]
         public IDictionary<string, string> AdditionalAttributes { get; set; } = new Dictionary<string, string>();
 
-        [ViewContext] [HtmlAttributeNotBound] public ViewContext ViewContext { get; set; }
+        [ViewContext] 
+        [HtmlAttributeNotBound] 
+        public ViewContext ViewContext { get; set; }
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
             var propertyName = For.Name;
             var value = For.Model?.ToString() ?? "";
 
-            ViewContext.ViewData.ModelState.TryGetValue(propertyName, out ModelStateEntry entry);
+            ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry);
             var hasError = entry != null && entry.Errors.Count > 0;
 
             output.TagName = "div";
