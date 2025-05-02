@@ -7,4 +7,5 @@ global using Microsoft.AspNetCore.Mvc.ModelBinding;
 global using Microsoft.AspNetCore.Mvc.Rendering;
 global using Microsoft.AspNetCore.Mvc.ViewFeatures;
 global using Microsoft.AspNetCore.Razor.TagHelpers;
+global using Rsp.Gds.Component.Models;
 global using Rsp.Gds.Component.TagHelpers.Base;
