@@ -11,7 +11,7 @@ public class RspGdsRadioGroupTagHelper : TagHelper
 
     [HtmlAttributeName("label-text")] public string LabelText { get; set; }
 
-    [HtmlAttributeName("options")] public IEnumerable<GdsRadioOption> Options { get; set; }
+    [HtmlAttributeName("options")] public IEnumerable<GdsOption> Options { get; set; }
 
     [ViewContext] [HtmlAttributeNotBound] public ViewContext ViewContext { get; set; }
 
