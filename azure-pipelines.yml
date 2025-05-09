@@ -41,9 +41,19 @@ stages:
   - stage: CustomNuGetPackage
     displayName: Creating GDS Component NuGet Package
     jobs:
-    - template: jobs/artifact.yaml@library
-      parameters:
-        run_github_security_scan: false
-        sonar_project_key: HealthResearchAuthority_rsp-gds-component-package
-        sonar_project_name: rsp-gds-component-package
-        run_sonarcloud_analysis: ${{ parameters.run_sonarcloud_analysis }}
+      - job: prep-icon
+        displayName: 'Prepare icon.png for NuGet packaging'
+        steps:
+          - task: CopyFiles@2
+            displayName: 'Copy icon.png to project directory'
+            inputs:
+              SourceFolder: '$(Build.SourcesDirectory)'
+              Contents: 'icon.png'
+              TargetFolder: '$(Build.SourcesDirectory)/rsp-gds-component-package/src/Rsp.Gds.Component'
+
+      - template: jobs/artifact.yaml@library
+        parameters:
+          run_github_security_scan: false
+          sonar_project_key: HealthResearchAuthority_rsp-gds-component-package
+          sonar_project_name: rsp-gds-component-package
+          run_sonarcloud_analysis: ${{ parameters.run_sonarcloud_analysis }}
