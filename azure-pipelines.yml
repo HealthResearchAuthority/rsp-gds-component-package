@@ -41,7 +41,7 @@ stages:
   - stage: CustomNuGetPackage
     displayName: Creating GDS Component NuGet Package
     jobs:
-      - job: prep-icon
+      - job: prep_icon
         displayName: 'Prepare icon.png for NuGet packaging'
         steps:
           - task: CopyFiles@2
