@@ -1,11 +1,11 @@
-﻿namespace Rsp.Gds.Component.UnitTests;
+﻿namespace Rsp.Gds.Component.UnitTests.TagHelpers.Specialised;
 
-public class RspGdsTextareaTagHelperTests
+public class RspGdsCharacterCountTextareaTagHelperTests
 {
     private static TagHelperContext CreateTagHelperContext()
     {
         return new TagHelperContext(
-            "rsp-gds-textarea",
+            "rsp-gds-character-count-textarea",
             new TagHelperAttributeList(),
             new Dictionary<object, object>(),
             "test");
@@ -14,7 +14,7 @@ public class RspGdsTextareaTagHelperTests
     private static TagHelperOutput CreateTagHelperOutput()
     {
         return new TagHelperOutput(
-            "rsp-gds-textarea",
+            "rsp-gds-character-count-textarea",
             new TagHelperAttributeList(),
             (useCachedResult, encoder) =>
             {
@@ -23,12 +23,18 @@ public class RspGdsTextareaTagHelperTests
             });
     }
 
-    private static ViewContext CreateViewContext(string fieldName, string value = null, string errorMessage = null)
+    private static ViewContext CreateViewContext(string fieldName, string fieldError = null,
+        string wordCountErrorField = null, string wordCountError = null)
     {
         var modelState = new ModelStateDictionary();
-        if (errorMessage != null)
+        if (fieldError != null)
         {
-            modelState.AddModelError(fieldName, errorMessage);
+            modelState.AddModelError(fieldName, fieldError);
+        }
+
+        if (wordCountErrorField != null && wordCountError != null)
+        {
+            modelState.AddModelError(wordCountErrorField, wordCountError);
         }
 
         var viewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), modelState)
@@ -51,17 +57,17 @@ public class RspGdsTextareaTagHelperTests
     }
 
     [Fact]
-    public void Process_GeneratesExpectedHtml_ForValidTextarea()
+    public void Process_RendersTextareaWithCharacterCountWrapper()
     {
         // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
-        var tagHelper = new RspGdsTextareaTagHelper
+        var tagHelper = new RspGdsCharacterCountTextareaTagHelper
         {
-            For = CreateModelExpression("Comments", "Initial text"),
-            LabelText = "Your comment",
-            ViewContext = CreateViewContext("Comments")
+            For = CreateModelExpression("Feedback", "Some feedback"),
+            LabelText = "Your feedback",
+            ViewContext = CreateViewContext("Feedback")
         };
 
         // Act
@@ -73,27 +79,28 @@ public class RspGdsTextareaTagHelperTests
         doc.LoadHtml(html);
 
         var label = doc.DocumentNode.SelectSingleNode("//label");
-        Assert.Contains("Your comment", label.InnerHtml);
+        Assert.Contains("Your feedback", label.InnerHtml);
 
         var textarea = doc.DocumentNode.SelectSingleNode("//textarea");
-        Assert.Equal("Comments", textarea.Attributes["name"]?.Value);
-        Assert.Contains("Initial text", textarea.InnerHtml);
-        Assert.Equal("5", textarea.Attributes["rows"]?.Value);
-        Assert.DoesNotContain("govuk-textarea--error", textarea.Attributes["class"]?.Value);
+        Assert.Equal("Feedback", textarea.Attributes["name"]?.Value);
+        Assert.Contains("Some feedback", textarea.InnerHtml);
+
+        var wrapperDiv = output.Attributes["class"].Value.ToString();
+        Assert.Contains("govuk-character-count", wrapperDiv);
     }
 
     [Fact]
-    public void Process_AddsErrorClass_WhenModelStateHasError()
+    public void Process_RendersFieldError_WhenModelStateHasError()
     {
         // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
-        var tagHelper = new RspGdsTextareaTagHelper
+        var tagHelper = new RspGdsCharacterCountTextareaTagHelper
         {
-            For = CreateModelExpression("Notes", ""),
-            LabelText = "Notes",
-            ViewContext = CreateViewContext("Notes", "", "This field is required")
+            For = CreateModelExpression("Comments", ""),
+            LabelText = "Comments",
+            ViewContext = CreateViewContext("Comments", "This field is required")
         };
 
         // Act
@@ -101,27 +108,23 @@ public class RspGdsTextareaTagHelperTests
 
         // Assert
         var html = output.Content.GetContent();
-        Assert.Contains("govuk-textarea--error", html);
-        Assert.Contains("govuk-error-message", html);
+        Assert.Contains("govuk-form-group--error", output.Attributes["class"].Value.ToString());
         Assert.Contains("This field is required", html);
+        Assert.Contains("govuk-error-message", html);
     }
 
     [Fact]
-    public void Process_SetsCustomAttributesCorrectly()
+    public void Process_RendersWordCountError_WhenWordCountModelStateHasError()
     {
         // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
-        var tagHelper = new RspGdsTextareaTagHelper
+        var tagHelper = new RspGdsCharacterCountTextareaTagHelper
         {
-            For = CreateModelExpression("Message", "Some message"),
-            Placeholder = "Type here...",
-            Readonly = true,
-            Disabled = true,
-            Rows = 7,
-            AdditionalAttributes = new Dictionary<string, string> { { "data-test", "msg" } },
-            ViewContext = CreateViewContext("Message")
+            For = CreateModelExpression("Notes", "Some notes"),
+            WordCountErrorProperty = "NotesWordCount",
+            ViewContext = CreateViewContext("Notes", null, "NotesWordCount", "Word limit exceeded")
         };
 
         // Act
@@ -129,14 +132,8 @@ public class RspGdsTextareaTagHelperTests
 
         // Assert
         var html = output.Content.GetContent();
-        var doc = new HtmlDocument();
-        doc.LoadHtml(html);
-
-        var textarea = doc.DocumentNode.SelectSingleNode("//textarea");
-        Assert.Equal("7", textarea.Attributes["rows"]?.Value);
-        Assert.Equal("readonly", textarea.Attributes["readonly"]?.Value);
-        Assert.Equal("disabled", textarea.Attributes["disabled"]?.Value);
-        Assert.Equal("Type here...", textarea.Attributes["placeholder"]?.Value);
-        Assert.Equal("msg", textarea.Attributes["data-test"]?.Value);
+        Assert.Contains("Word limit exceeded", html);
+        Assert.Contains("govuk-character-count__message", html);
+        Assert.Contains("govuk-error-message", html);
     }
 }

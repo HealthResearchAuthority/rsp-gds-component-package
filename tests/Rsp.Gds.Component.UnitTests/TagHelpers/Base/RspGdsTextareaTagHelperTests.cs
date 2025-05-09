@@ -1,11 +1,11 @@
-﻿namespace Rsp.Gds.Component.UnitTests;
+﻿namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
 
-public class RspGdsInputTagHelperTests
+public class RspGdsTextareaTagHelperTests
 {
     private static TagHelperContext CreateTagHelperContext()
     {
         return new TagHelperContext(
-            "rsp-gds-input",
+            "rsp-gds-textarea",
             new TagHelperAttributeList(),
             new Dictionary<object, object>(),
             "test");
@@ -14,7 +14,7 @@ public class RspGdsInputTagHelperTests
     private static TagHelperOutput CreateTagHelperOutput()
     {
         return new TagHelperOutput(
-            "rsp-gds-input",
+            "rsp-gds-textarea",
             new TagHelperAttributeList(),
             (useCachedResult, encoder) =>
             {
@@ -51,17 +51,17 @@ public class RspGdsInputTagHelperTests
     }
 
     [Fact]
-    public void Process_GeneratesExpectedHtml_ForValidInput()
+    public void Process_GeneratesExpectedHtml_ForValidTextarea()
     {
         // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
-        var tagHelper = new RspGdsInputTagHelper
+        var tagHelper = new RspGdsTextareaTagHelper
         {
-            For = CreateModelExpression("FirstName", "John"),
-            LabelText = "Your name",
-            ViewContext = CreateViewContext("FirstName")
+            For = CreateModelExpression("Comments", "Initial text"),
+            LabelText = "Your comment",
+            ViewContext = CreateViewContext("Comments")
         };
 
         // Act
@@ -73,12 +73,13 @@ public class RspGdsInputTagHelperTests
         doc.LoadHtml(html);
 
         var label = doc.DocumentNode.SelectSingleNode("//label");
-        Assert.Contains("Your name", label.InnerHtml);
+        Assert.Contains("Your comment", label.InnerHtml);
 
-        var input = doc.DocumentNode.SelectSingleNode("//input");
-        Assert.Equal("FirstName", input.Attributes["name"]?.Value);
-        Assert.Equal("John", input.Attributes["value"]?.Value);
-        Assert.DoesNotContain("govuk-input--error", input.Attributes["class"]?.Value);
+        var textarea = doc.DocumentNode.SelectSingleNode("//textarea");
+        Assert.Equal("Comments", textarea.Attributes["name"]?.Value);
+        Assert.Contains("Initial text", textarea.InnerHtml);
+        Assert.Equal("5", textarea.Attributes["rows"]?.Value);
+        Assert.DoesNotContain("govuk-textarea--error", textarea.Attributes["class"]?.Value);
     }
 
     [Fact]
@@ -88,11 +89,11 @@ public class RspGdsInputTagHelperTests
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
-        var tagHelper = new RspGdsInputTagHelper
+        var tagHelper = new RspGdsTextareaTagHelper
         {
-            For = CreateModelExpression("Email", ""),
-            LabelText = "Email",
-            ViewContext = CreateViewContext("Email", "", "Email is required")
+            For = CreateModelExpression("Notes", ""),
+            LabelText = "Notes",
+            ViewContext = CreateViewContext("Notes", "", "This field is required")
         };
 
         // Act
@@ -100,9 +101,9 @@ public class RspGdsInputTagHelperTests
 
         // Assert
         var html = output.Content.GetContent();
-        Assert.Contains("govuk-input--error", html);
+        Assert.Contains("govuk-textarea--error", html);
         Assert.Contains("govuk-error-message", html);
-        Assert.Contains("Email is required", html);
+        Assert.Contains("This field is required", html);
     }
 
     [Fact]
@@ -112,16 +113,15 @@ public class RspGdsInputTagHelperTests
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
-        var tagHelper = new RspGdsInputTagHelper
+        var tagHelper = new RspGdsTextareaTagHelper
         {
-            For = CreateModelExpression("Phone", "123"),
-            LabelText = "Phone Number",
-            Placeholder = "e.g. 07123456789",
-            Autocomplete = "tel",
+            For = CreateModelExpression("Message", "Some message"),
+            Placeholder = "Type here...",
             Readonly = true,
             Disabled = true,
-            AdditionalAttributes = new Dictionary<string, string> { { "data-test", "phone" } },
-            ViewContext = CreateViewContext("Phone")
+            Rows = 7,
+            AdditionalAttributes = new Dictionary<string, string> { { "data-test", "msg" } },
+            ViewContext = CreateViewContext("Message")
         };
 
         // Act
@@ -129,10 +129,14 @@ public class RspGdsInputTagHelperTests
 
         // Assert
         var html = output.Content.GetContent();
-        Assert.Contains("readonly='readonly'", html);
-        Assert.Contains("disabled='disabled'", html);
-        Assert.Contains("autocomplete='tel'", html);
-        Assert.Contains("placeholder='e.g. 07123456789'", html);
-        Assert.Contains("data-test='phone'", html);
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
+
+        var textarea = doc.DocumentNode.SelectSingleNode("//textarea");
+        Assert.Equal("7", textarea.Attributes["rows"]?.Value);
+        Assert.Equal("readonly", textarea.Attributes["readonly"]?.Value);
+        Assert.Equal("disabled", textarea.Attributes["disabled"]?.Value);
+        Assert.Equal("Type here...", textarea.Attributes["placeholder"]?.Value);
+        Assert.Equal("msg", textarea.Attributes["data-test"]?.Value);
     }
 }
