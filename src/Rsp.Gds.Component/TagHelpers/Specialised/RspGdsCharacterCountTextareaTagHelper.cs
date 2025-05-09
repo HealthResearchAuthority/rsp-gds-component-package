@@ -1,60 +1,59 @@
-﻿namespace Rsp.Gds.Component.TagHelpers.Specialised
+﻿namespace Rsp.Gds.Component.TagHelpers.Specialised;
+
+[HtmlTargetElement("rsp-gds-character-count-textarea", Attributes = ForAttributeName)]
+public class RspGdsCharacterCountTextareaTagHelper : RspGdsTextareaTagHelper
 {
-    [HtmlTargetElement("rsp-gds-character-count-textarea", Attributes = ForAttributeName)]
-    public class RspGdsCharacterCountTextareaTagHelper : RspGdsTextareaTagHelper
+    [HtmlAttributeName("word-count-error-for")]
+    public string WordCountErrorProperty { get; set; }
+
+    public override void Process(TagHelperContext context, TagHelperOutput output)
     {
-        [HtmlAttributeName("word-count-error-for")]
-        public string WordCountErrorProperty { get; set; }
+        var propertyName = For.Name;
 
-        public override void Process(TagHelperContext context, TagHelperOutput output)
+        ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var fieldEntry);
+        var hasFieldError = fieldEntry != null && fieldEntry.Errors.Count > 0;
+
+        ModelStateEntry wordCountEntry = null;
+        if (!string.IsNullOrEmpty(WordCountErrorProperty))
         {
-            var propertyName = For.Name;
+            ViewContext.ViewData.ModelState.TryGetValue(WordCountErrorProperty, out wordCountEntry);
+        }
 
-            ViewContext.ViewData.ModelState.TryGetValue(propertyName, out ModelStateEntry fieldEntry);
-            var hasFieldError = fieldEntry != null && fieldEntry.Errors.Count > 0;
+        var hasWordCountError = wordCountEntry != null && wordCountEntry.Errors.Count > 0;
 
-            ModelStateEntry wordCountEntry = null;
-            if (!string.IsNullOrEmpty(WordCountErrorProperty))
-            {
-                ViewContext.ViewData.ModelState.TryGetValue(WordCountErrorProperty, out wordCountEntry);
-            }
+        output.TagName = "div";
+        output.TagMode = TagMode.StartTagAndEndTag;
+        output.Attributes.SetAttribute("class",
+            $"govuk-form-group govuk-character-count {(hasFieldError ? "govuk-form-group--error" : "")}");
+        output.Attributes.SetAttribute("data-module", "govuk-character-count");
 
-            var hasWordCountError = wordCountEntry != null && wordCountEntry.Errors.Count > 0;
-
-            output.TagName = "div";
-            output.TagMode = TagMode.StartTagAndEndTag;
-            output.Attributes.SetAttribute("class",
-                $"govuk-form-group govuk-character-count {(hasFieldError ? "govuk-form-group--error" : "")}");
-            output.Attributes.SetAttribute("data-module", "govuk-character-count");
-
-            var labelHtml = $@"
+        var labelHtml = $@"
                 <div class='govuk-label-wrapper'>
                     <label class='govuk-label govuk-label--s' for='{propertyName}'>
                         {LabelText ?? propertyName}
                     </label>
                 </div>";
 
-            var fieldErrorsHtml = "";
-            if (hasFieldError)
+        var fieldErrorsHtml = "";
+        if (hasFieldError)
+        {
+            foreach (var error in fieldEntry.Errors)
             {
-                foreach (var error in fieldEntry.Errors)
-                {
-                    fieldErrorsHtml += $"<span class='govuk-error-message'>{error.ErrorMessage}</span>";
-                }
+                fieldErrorsHtml += $"<span class='govuk-error-message'>{error.ErrorMessage}</span>";
             }
+        }
 
-            var textareaHtml = GetTextareaHtml(hasFieldError);
+        var textareaHtml = GetTextareaHtml(hasFieldError);
 
-            var wordCountErrorHtml = "";
-            if (hasWordCountError)
-            {
-                wordCountErrorHtml = $@"
+        var wordCountErrorHtml = "";
+        if (hasWordCountError)
+        {
+            wordCountErrorHtml = $@"
                     <div class='govuk-character-count__message govuk-error-message'>
                         {wordCountEntry.Errors[0].ErrorMessage}
                     </div>";
-            }
-
-            output.Content.SetHtmlContent(labelHtml + fieldErrorsHtml + textareaHtml + wordCountErrorHtml);
         }
+
+        output.Content.SetHtmlContent(labelHtml + fieldErrorsHtml + textareaHtml + wordCountErrorHtml);
     }
 }

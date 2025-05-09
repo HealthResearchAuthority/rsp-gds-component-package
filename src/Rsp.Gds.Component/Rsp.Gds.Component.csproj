@@ -3,13 +3,12 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<PackageId>Rsp.Gds.Component</PackageId>
-		<Version>1.0.11</Version>
+		<Version>1.0.0</Version>
 		<Authors>HRA Technology Team</Authors>
 		<Company>Health Research Authority</Company>
 		<Description>Gds Component package that exposes components.</Description>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PackageTags>logging;loggermessage;correlationId</PackageTags>
-		<PackageIcon>icon.png</PackageIcon>
 		<PackageProjectUrl>https://dev.azure.com/futureiras/Research%20Systems%20Programme/_git/rsp-gds-component-package</PackageProjectUrl>
 		<RepositoryUrl>https://dev.azure.com/futureiras/Research%20Systems%20Programme/_git/rsp-gds-component-package</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
@@ -17,7 +16,6 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<NoWarn>$(NoWarn);1591</NoWarn>
 		<DebugType>embedded</DebugType>
@@ -25,13 +23,6 @@
 		<ContinuousIntegrationBuild>True</ContinuousIntegrationBuild>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 	</PropertyGroup>
-
-	<ItemGroup>
-	  <None Include="..\..\icon.png">
-	    <Pack>True</Pack>
-	    <PackagePath>\</PackagePath>
-	  </None>
-	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Castle.Core.AsyncInterceptor" Version="2.1.0" />
