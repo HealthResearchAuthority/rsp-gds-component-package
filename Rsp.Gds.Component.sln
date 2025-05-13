@@ -15,18 +15,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
 		azure-pipelines.yml = azure-pipelines.yml
-		icon.png = icon.png
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{39B4D2DC-1756-4106-95FE-229974B1110E}"
-	ProjectSection(SolutionItems) = preProject
-		scripts\installcredprovider.ps1 = scripts\installcredprovider.ps1
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rsp.Gds.Component", "src\Rsp.Gds.Component\Rsp.Gds.Component.csproj", "{A7510CAD-A7A5-4D26-A19E-E79FB7FE6254}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{11F4D342-D99B-46FA-89B8-6500969F838A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -19,9 +19,10 @@ parameters:
     displayName: Skip Deployment
     type: boolean
     default: false
+
 variables:
   - name: vstsFeed
-    value: "0e030eb0-cb72-4f42-b99a-26e6544271c3/0a3e0ad2-23b6-4e8b-ae12-cd6d01fe97e7"
+    value: "0e030eb0-cb72-4f42-b99a-26e6544271c3/rsp-nuget-feed"
   - name: project
     value: "**/Rsp.Gds.Component.csproj"
   - name: solution
@@ -41,9 +42,9 @@ stages:
   - stage: CustomNuGetPackage
     displayName: Creating GDS Component NuGet Package
     jobs:
-    - template: jobs/artifact.yaml@library
-      parameters:
-        run_github_security_scan: false
-        sonar_project_key: HealthResearchAuthority_rsp-gds-component-package
-        sonar_project_name: rsp-gds-component-package
-        run_sonarcloud_analysis: ${{ parameters.run_sonarcloud_analysis }}
+      - template: jobs/artifact.yaml@library
+        parameters:
+          run_github_security_scan: false
+          sonar_project_key: HealthResearchAuthority_rsp-gds-component-package
+          sonar_project_name: rsp-gds-component-package
+          run_sonarcloud_analysis: ${{ parameters.run_sonarcloud_analysis }}

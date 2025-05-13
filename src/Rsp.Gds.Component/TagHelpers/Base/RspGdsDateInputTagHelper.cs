@@ -2,26 +2,69 @@
 
 namespace Rsp.Gds.Component.TagHelpers.Base;
 
+/// <summary>
+///     Renders a GOV.UK-styled date input field with separate Day, Month, and Year inputs.
+///     Supports hint text, label customization, and validation error display.
+/// </summary>
 [HtmlTargetElement("rsp-gds-date-input", Attributes = ForAttributeName)]
 public class RspGdsDateInputTagHelper : TagHelper
 {
     private const string ForAttributeName = "asp-for";
 
-    [HtmlAttributeName(ForAttributeName)] public ModelExpression For { get; set; }
+    /// <summary>
+    ///     The model expression this date input group is bound to.
+    ///     Used for binding the field and referencing validation state.
+    /// </summary>
+    [HtmlAttributeName(ForAttributeName)]
+    public ModelExpression For { get; set; }
 
-    [HtmlAttributeName("day-name")] public string DayName { get; set; }
+    /// <summary>
+    ///     The name attribute for the "Day" input field.
+    ///     Also used as the input's HTML id.
+    /// </summary>
+    [HtmlAttributeName("day-name")]
+    public string DayName { get; set; }
 
-    [HtmlAttributeName("month-name")] public string MonthName { get; set; }
+    /// <summary>
+    ///     The name attribute for the "Month" input field.
+    ///     Also used as the input's HTML id.
+    /// </summary>
+    [HtmlAttributeName("month-name")]
+    public string MonthName { get; set; }
 
-    [HtmlAttributeName("year-name")] public string YearName { get; set; }
+    /// <summary>
+    ///     The name attribute for the "Year" input field.
+    ///     Also used as the input's HTML id.
+    /// </summary>
+    [HtmlAttributeName("year-name")]
+    public string YearName { get; set; }
 
-    [HtmlAttributeName("label-text")] public string LabelText { get; set; }
+    /// <summary>
+    ///     The label text to be displayed above the date input.
+    ///     If not specified, the bound property name is used.
+    /// </summary>
+    [HtmlAttributeName("label-text")]
+    public string LabelText { get; set; }
 
-    [HtmlAttributeName("hint-html")] public string HintHtml { get; set; }
+    /// <summary>
+    ///     Optional HTML content rendered as hint text below the label.
+    /// </summary>
+    [HtmlAttributeName("hint-html")]
+    public string HintHtml { get; set; }
 
-    [HtmlAttributeName("error-key")] public string ErrorKey { get; set; }
+    /// <summary>
+    ///     Optional override key to lookup validation errors.
+    ///     Defaults to the model property name if not provided.
+    /// </summary>
+    [HtmlAttributeName("error-key")]
+    public string ErrorKey { get; set; }
 
-    [ViewContext] [HtmlAttributeNotBound] public ViewContext ViewContext { get; set; }
+    /// <summary>
+    ///     Provides access to the current view context, including ModelState for validation.
+    /// </summary>
+    [ViewContext]
+    [HtmlAttributeNotBound]
+    public ViewContext ViewContext { get; set; }
 
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {

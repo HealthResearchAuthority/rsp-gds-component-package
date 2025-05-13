@@ -2,24 +2,47 @@
 
 namespace Rsp.Gds.Component.TagHelpers.Base;
 
+/// <summary>
+///     Renders a GOV.UK-styled radio button group for a model-bound property.
+///     Supports label text, dynamic options, and displays validation errors.
+/// </summary>
 [HtmlTargetElement("rsp-gds-radio-group", Attributes = ForAttributeName)]
 public class RspGdsRadioGroupTagHelper : TagHelper
 {
     private const string ForAttributeName = "asp-for";
 
-    [HtmlAttributeName(ForAttributeName)] public ModelExpression For { get; set; }
+    /// <summary>
+    ///     The model expression this radio group is bound to.
+    ///     Used for setting the field name, selected value, and validation.
+    /// </summary>
+    [HtmlAttributeName(ForAttributeName)]
+    public ModelExpression For { get; set; }
 
-    [HtmlAttributeName("label-text")] public string LabelText { get; set; }
+    /// <summary>
+    ///     The label text displayed above the radio button group.
+    /// </summary>
+    [HtmlAttributeName("label-text")]
+    public string LabelText { get; set; }
 
-    [HtmlAttributeName("options")] public IEnumerable<GdsOption> Options { get; set; }
+    /// <summary>
+    ///     A list of options to be rendered as individual radio buttons.
+    ///     Each option contains a Value and a Label.
+    /// </summary>
+    [HtmlAttributeName("options")]
+    public IEnumerable<GdsOption> Options { get; set; }
 
-    [ViewContext] [HtmlAttributeNotBound] public ViewContext ViewContext { get; set; }
+    /// <summary>
+    ///     Provides access to the current view context, including ModelState for validation.
+    /// </summary>
+    [ViewContext]
+    [HtmlAttributeNotBound]
+    public ViewContext ViewContext { get; set; }
 
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
 
-        // ✅ Safely extract selected value even if model is a List<string>
+        // Attempt to determine the selected value from model
         var selectedValue = For.Model switch
         {
             string str => str,
@@ -27,7 +50,7 @@ public class RspGdsRadioGroupTagHelper : TagHelper
             _ => For.Model?.ToString()
         };
 
-        // ✅ Error handling
+        // Get validation errors for this property
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var modelStateEntry);
         var hasError = modelStateEntry != null && modelStateEntry.Errors.Count > 0;
 
@@ -39,7 +62,7 @@ public class RspGdsRadioGroupTagHelper : TagHelper
         output.TagMode = TagMode.StartTagAndEndTag;
         output.Attributes.SetAttribute("class", $"govuk-form-group {(hasError ? "govuk-form-group--error" : "")}");
 
-        // ✅ Render radio options
+        // Build individual radio items
         var radiosHtml = string.Join("\n", Options.Select(option =>
         {
             var inputId = $"{propertyName}_{option.Value.Replace(" ", "_")}";
@@ -65,6 +88,7 @@ public class RspGdsRadioGroupTagHelper : TagHelper
                     </div>";
         }));
 
+        // Wrap in GOV.UK fieldset structure
         var fieldsetHtml = $@"
                 <fieldset class='govuk-fieldset'>
                     <legend class='govuk-fieldset__legend govuk-fieldset__legend--m'>
