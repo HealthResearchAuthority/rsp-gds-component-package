@@ -1,17 +1,40 @@
 ﻿namespace Rsp.Gds.Component.TagHelpers.Base;
 
+/// <summary>
+///     Renders a GOV.UK-styled checkbox group based on a model-bound property and a list of options.
+///     Displays validation errors and applies appropriate GOV.UK form styling.
+/// </summary>
 [HtmlTargetElement("rsp-gds-checkbox-group", Attributes = ForAttributeName)]
 public class RspGdsCheckboxGroupTagHelper : TagHelper
 {
     private const string ForAttributeName = "asp-for";
 
-    [HtmlAttributeName(ForAttributeName)] public ModelExpression For { get; set; }
+    /// <summary>
+    ///     The model expression this checkbox group is bound to.
+    ///     Used to get the selected values and bind input names.
+    /// </summary>
+    [HtmlAttributeName(ForAttributeName)]
+    public ModelExpression For { get; set; }
 
-    [HtmlAttributeName("label-text")] public string LabelText { get; set; }
+    /// <summary>
+    ///     The text label displayed above the checkbox group.
+    ///     If not provided, the property name will be used.
+    /// </summary>
+    [HtmlAttributeName("label-text")]
+    public string LabelText { get; set; }
 
-    [HtmlAttributeName("options")] public IEnumerable<string> Options { get; set; }
+    /// <summary>
+    ///     The list of string values to be rendered as checkbox options.
+    /// </summary>
+    [HtmlAttributeName("options")]
+    public IEnumerable<string> Options { get; set; }
 
-    [ViewContext] [HtmlAttributeNotBound] public ViewContext ViewContext { get; set; }
+    /// <summary>
+    ///     Provides context about the current view, including model state for validation messages.
+    /// </summary>
+    [ViewContext]
+    [HtmlAttributeNotBound]
+    public ViewContext ViewContext { get; set; }
 
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
