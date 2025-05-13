@@ -1,4 +1,15 @@
-﻿namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
+﻿using HtmlAgilityPack;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+using Rsp.Gds.Component.TagHelpers.Base;
+using Shouldly;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
 
 public class RspGdsSelectTagHelperTests
 {
@@ -50,19 +61,15 @@ public class RspGdsSelectTagHelperTests
         return new ModelExpression(name, modelExplorer);
     }
 
-    private static List<GdsOption> GetOptions()
+    private static List<GdsOption> GetOptions() => new()
     {
-        return new List<GdsOption>
-        {
-            new GdsOption { Label = "Option A", Value = "A" },
-            new GdsOption { Label = "Option B", Value = "B" }
-        };
-    }
+        new GdsOption { Label = "Option A", Value = "A" },
+        new GdsOption { Label = "Option B", Value = "B" }
+    };
 
     [Fact]
     public void Process_RendersExpectedHtml_WithDefaultOption()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -74,29 +81,26 @@ public class RspGdsSelectTagHelperTests
             ViewContext = CreateViewContext("Category")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
         var label = doc.DocumentNode.SelectSingleNode("//label");
-        Assert.Contains("Choose category", label.InnerHtml);
+        label.InnerHtml.ShouldContain("Choose category");
 
         var select = doc.DocumentNode.SelectSingleNode("//select");
-        Assert.Equal("Category", select.Attributes["name"]?.Value);
+        select.Attributes["name"]?.Value.ShouldBe("Category");
 
         var defaultOption = doc.DocumentNode.SelectSingleNode("//option[@value='']");
-        Assert.Contains("Please select...", defaultOption.InnerHtml);
-        Assert.Equal("", defaultOption.Attributes["selected"]?.Value);
+        defaultOption.InnerHtml.ShouldContain("Please select...");
+        defaultOption.Attributes["selected"]?.Value.ShouldBe(""); // no 'selected' attribute means it is not selected
     }
 
     [Fact]
     public void Process_RendersSelectedOption_WhenModelHasValue()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -108,23 +112,20 @@ public class RspGdsSelectTagHelperTests
             ViewContext = CreateViewContext("Type")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
         var selected = doc.DocumentNode.SelectSingleNode("//option[@selected]");
-        Assert.Equal("B", selected.Attributes["value"]?.Value);
-        Assert.Contains("Option B", selected.InnerHtml);
+        selected.Attributes["value"]?.Value.ShouldBe("B");
+        selected.InnerHtml.ShouldContain("Option B");
     }
 
     [Fact]
     public void Process_RendersErrorMessage_WhenModelStateHasError()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -136,20 +137,17 @@ public class RspGdsSelectTagHelperTests
             ViewContext = CreateViewContext("Status", "Required field")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
-        Assert.Contains("govuk-form-group--error", output.Attributes["class"].Value.ToString());
-        Assert.Contains("Required field", html);
-        Assert.Contains("govuk-error-message", html);
+        output.Attributes["class"].Value.ToString().ShouldContain("govuk-form-group--error");
+        html.ShouldContain("Required field");
+        html.ShouldContain("govuk-error-message");
     }
 
     [Fact]
     public void Process_SkipsDefaultOption_WhenIncludeDefaultOptionIsFalse()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -162,15 +160,13 @@ public class RspGdsSelectTagHelperTests
             ViewContext = CreateViewContext("Priority")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
         var defaultOption = doc.DocumentNode.SelectSingleNode("//option[@value='']");
-        Assert.Null(defaultOption);
+        defaultOption.ShouldBeNull();
     }
 }

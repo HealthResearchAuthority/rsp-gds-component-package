@@ -1,4 +1,15 @@
-﻿namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
+﻿using HtmlAgilityPack;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+using Rsp.Gds.Component.TagHelpers.Base;
+using Shouldly;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
 
 public class RspGdsTextareaTagHelperTests
 {
@@ -53,7 +64,6 @@ public class RspGdsTextareaTagHelperTests
     [Fact]
     public void Process_GeneratesExpectedHtml_ForValidTextarea()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -64,28 +74,25 @@ public class RspGdsTextareaTagHelperTests
             ViewContext = CreateViewContext("Comments")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
         var label = doc.DocumentNode.SelectSingleNode("//label");
-        Assert.Contains("Your comment", label.InnerHtml);
+        label.InnerHtml.ShouldContain("Your comment");
 
         var textarea = doc.DocumentNode.SelectSingleNode("//textarea");
-        Assert.Equal("Comments", textarea.Attributes["name"]?.Value);
-        Assert.Contains("Initial text", textarea.InnerHtml);
-        Assert.Equal("5", textarea.Attributes["rows"]?.Value);
-        Assert.DoesNotContain("govuk-textarea--error", textarea.Attributes["class"]?.Value);
+        textarea.Attributes["name"]?.Value.ShouldBe("Comments");
+        textarea.InnerHtml.ShouldContain("Initial text");
+        textarea.Attributes["rows"]?.Value.ShouldBe("5");
+        textarea.Attributes["class"]?.Value.ShouldNotContain("govuk-textarea--error");
     }
 
     [Fact]
     public void Process_AddsErrorClass_WhenModelStateHasError()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -96,20 +103,17 @@ public class RspGdsTextareaTagHelperTests
             ViewContext = CreateViewContext("Notes", "", "This field is required")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
-        Assert.Contains("govuk-textarea--error", html);
-        Assert.Contains("govuk-error-message", html);
-        Assert.Contains("This field is required", html);
+        html.ShouldContain("govuk-textarea--error");
+        html.ShouldContain("govuk-error-message");
+        html.ShouldContain("This field is required");
     }
 
     [Fact]
     public void Process_SetsCustomAttributesCorrectly()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -124,19 +128,17 @@ public class RspGdsTextareaTagHelperTests
             ViewContext = CreateViewContext("Message")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
         var textarea = doc.DocumentNode.SelectSingleNode("//textarea");
-        Assert.Equal("7", textarea.Attributes["rows"]?.Value);
-        Assert.Equal("readonly", textarea.Attributes["readonly"]?.Value);
-        Assert.Equal("disabled", textarea.Attributes["disabled"]?.Value);
-        Assert.Equal("Type here...", textarea.Attributes["placeholder"]?.Value);
-        Assert.Equal("msg", textarea.Attributes["data-test"]?.Value);
+        textarea.Attributes["rows"]?.Value.ShouldBe("7");
+        textarea.Attributes["readonly"]?.Value.ShouldBe("readonly");
+        textarea.Attributes["disabled"]?.Value.ShouldBe("disabled");
+        textarea.Attributes["placeholder"]?.Value.ShouldBe("Type here...");
+        textarea.Attributes["data-test"]?.Value.ShouldBe("msg");
     }
 }

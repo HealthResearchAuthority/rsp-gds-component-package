@@ -1,4 +1,15 @@
-﻿namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
+﻿using HtmlAgilityPack;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+using Rsp.Gds.Component.TagHelpers.Base;
+using Shouldly;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
 
 public class RspGdsDateInputTagHelperTests
 {
@@ -53,7 +64,6 @@ public class RspGdsDateInputTagHelperTests
     [Fact]
     public void Process_RendersExpectedHtml_WithHintAndInputs()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -68,26 +78,23 @@ public class RspGdsDateInputTagHelperTests
             ViewContext = CreateViewContext()
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
-        Assert.Contains("Date of birth", html);
-        Assert.Contains("For example, 31 3 1980", html);
+        html.ShouldContain("Date of birth");
+        html.ShouldContain("For example, 31 3 1980");
 
-        Assert.NotNull(doc.DocumentNode.SelectSingleNode("//input[@name='BirthDate.Day']"));
-        Assert.NotNull(doc.DocumentNode.SelectSingleNode("//input[@name='BirthDate.Month']"));
-        Assert.NotNull(doc.DocumentNode.SelectSingleNode("//input[@name='BirthDate.Year']"));
+        doc.DocumentNode.SelectSingleNode("//input[@name='BirthDate.Day']").ShouldNotBeNull();
+        doc.DocumentNode.SelectSingleNode("//input[@name='BirthDate.Month']").ShouldNotBeNull();
+        doc.DocumentNode.SelectSingleNode("//input[@name='BirthDate.Year']").ShouldNotBeNull();
     }
 
     [Fact]
     public void Process_RendersErrorMessage_WhenModelStateHasError()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -102,25 +109,23 @@ public class RspGdsDateInputTagHelperTests
             ViewContext = CreateViewContext("StartDate", "Invalid date")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
-        Assert.Contains("Invalid date", html);
-        Assert.Contains("govuk-form-group--error", output.Attributes["class"].Value.ToString());
+        html.ShouldContain("Invalid date");
+        output.Attributes["class"].Value.ToString().ShouldContain("govuk-form-group--error");
 
         var dayInput = doc.DocumentNode.SelectSingleNode("//input[@name='StartDate.Day']");
-        Assert.Contains("govuk-input--error", dayInput.Attributes["class"].Value);
+        dayInput.ShouldNotBeNull();
+        dayInput.Attributes["class"].Value.ShouldContain("govuk-input--error");
     }
 
     [Fact]
     public void Process_UsesForNameAsFallback_WhenErrorKeyIsNull()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -135,11 +140,9 @@ public class RspGdsDateInputTagHelperTests
             ViewContext = CreateViewContext("EndDate", "Required")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
-        Assert.Contains("Required", html);
+        html.ShouldContain("Required");
     }
 }

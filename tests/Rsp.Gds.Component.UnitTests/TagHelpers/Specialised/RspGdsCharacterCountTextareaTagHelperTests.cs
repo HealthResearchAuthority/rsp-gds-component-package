@@ -1,4 +1,15 @@
-﻿namespace Rsp.Gds.Component.UnitTests.TagHelpers.Specialised;
+﻿using HtmlAgilityPack;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+using Rsp.Gds.Component.TagHelpers.Specialised;
+using Shouldly;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace Rsp.Gds.Component.UnitTests.TagHelpers.Specialised;
 
 public class RspGdsCharacterCountTextareaTagHelperTests
 {
@@ -59,7 +70,6 @@ public class RspGdsCharacterCountTextareaTagHelperTests
     [Fact]
     public void Process_RendersTextareaWithCharacterCountWrapper()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -70,29 +80,26 @@ public class RspGdsCharacterCountTextareaTagHelperTests
             ViewContext = CreateViewContext("Feedback")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
         var label = doc.DocumentNode.SelectSingleNode("//label");
-        Assert.Contains("Your feedback", label.InnerHtml);
+        label.InnerHtml.ShouldContain("Your feedback");
 
         var textarea = doc.DocumentNode.SelectSingleNode("//textarea");
-        Assert.Equal("Feedback", textarea.Attributes["name"]?.Value);
-        Assert.Contains("Some feedback", textarea.InnerHtml);
+        textarea.Attributes["name"]?.Value.ShouldBe("Feedback");
+        textarea.InnerHtml.ShouldContain("Some feedback");
 
-        var wrapperDiv = output.Attributes["class"].Value.ToString();
-        Assert.Contains("govuk-character-count", wrapperDiv);
+        var wrapperDivClass = output.Attributes["class"].Value.ToString();
+        wrapperDivClass.ShouldContain("govuk-character-count");
     }
 
     [Fact]
     public void Process_RendersFieldError_WhenModelStateHasError()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -103,20 +110,17 @@ public class RspGdsCharacterCountTextareaTagHelperTests
             ViewContext = CreateViewContext("Comments", "This field is required")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
-        Assert.Contains("govuk-form-group--error", output.Attributes["class"].Value.ToString());
-        Assert.Contains("This field is required", html);
-        Assert.Contains("govuk-error-message", html);
+        output.Attributes["class"].Value.ToString().ShouldContain("govuk-form-group--error");
+        html.ShouldContain("This field is required");
+        html.ShouldContain("govuk-error-message");
     }
 
     [Fact]
     public void Process_RendersWordCountError_WhenWordCountModelStateHasError()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -127,13 +131,11 @@ public class RspGdsCharacterCountTextareaTagHelperTests
             ViewContext = CreateViewContext("Notes", null, "NotesWordCount", "Word limit exceeded")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
-        Assert.Contains("Word limit exceeded", html);
-        Assert.Contains("govuk-character-count__message", html);
-        Assert.Contains("govuk-error-message", html);
+        html.ShouldContain("Word limit exceeded");
+        html.ShouldContain("govuk-character-count__message");
+        html.ShouldContain("govuk-error-message");
     }
 }

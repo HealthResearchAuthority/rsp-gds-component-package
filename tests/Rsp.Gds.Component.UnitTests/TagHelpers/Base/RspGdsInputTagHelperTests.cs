@@ -1,4 +1,15 @@
-﻿namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
+﻿using HtmlAgilityPack;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+using Rsp.Gds.Component.TagHelpers.Base;
+using Shouldly;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
 
 public class RspGdsInputTagHelperTests
 {
@@ -53,7 +64,6 @@ public class RspGdsInputTagHelperTests
     [Fact]
     public void Process_GeneratesExpectedHtml_ForValidInput()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -64,27 +74,24 @@ public class RspGdsInputTagHelperTests
             ViewContext = CreateViewContext("FirstName")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
         var label = doc.DocumentNode.SelectSingleNode("//label");
-        Assert.Contains("Your name", label.InnerHtml);
+        label.InnerHtml.ShouldContain("Your name");
 
         var input = doc.DocumentNode.SelectSingleNode("//input");
-        Assert.Equal("FirstName", input.Attributes["name"]?.Value);
-        Assert.Equal("John", input.Attributes["value"]?.Value);
-        Assert.DoesNotContain("govuk-input--error", input.Attributes["class"]?.Value);
+        input.Attributes["name"]?.Value.ShouldBe("FirstName");
+        input.Attributes["value"]?.Value.ShouldBe("John");
+        input.Attributes["class"]?.Value.ShouldNotContain("govuk-input--error");
     }
 
     [Fact]
     public void Process_AddsErrorClass_WhenModelStateHasError()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -95,20 +102,17 @@ public class RspGdsInputTagHelperTests
             ViewContext = CreateViewContext("Email", "", "Email is required")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
-        Assert.Contains("govuk-input--error", html);
-        Assert.Contains("govuk-error-message", html);
-        Assert.Contains("Email is required", html);
+        html.ShouldContain("govuk-input--error");
+        html.ShouldContain("govuk-error-message");
+        html.ShouldContain("Email is required");
     }
 
     [Fact]
     public void Process_SetsCustomAttributesCorrectly()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -124,15 +128,13 @@ public class RspGdsInputTagHelperTests
             ViewContext = CreateViewContext("Phone")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
-        Assert.Contains("readonly='readonly'", html);
-        Assert.Contains("disabled='disabled'", html);
-        Assert.Contains("autocomplete='tel'", html);
-        Assert.Contains("placeholder='e.g. 07123456789'", html);
-        Assert.Contains("data-test='phone'", html);
+        html.ShouldContain("readonly='readonly'");
+        html.ShouldContain("disabled='disabled'");
+        html.ShouldContain("autocomplete='tel'");
+        html.ShouldContain("placeholder='e.g. 07123456789'");
+        html.ShouldContain("data-test='phone'");
     }
 }

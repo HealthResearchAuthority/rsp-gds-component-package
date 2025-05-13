@@ -1,4 +1,16 @@
-﻿namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
+﻿using HtmlAgilityPack;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+using Rsp.Gds.Component.TagHelpers.Base;
+using Shouldly;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
 
 public class RspGdsRadioGroupTagHelperTests
 {
@@ -50,19 +62,15 @@ public class RspGdsRadioGroupTagHelperTests
         return new ModelExpression(name, modelExplorer);
     }
 
-    private static List<GdsOption> GetOptions()
+    private static List<GdsOption> GetOptions() => new()
     {
-        return new List<GdsOption>
-        {
-            new GdsOption { Label = "Yes", Value = "yes" },
-            new GdsOption { Label = "No", Value = "no" }
-        };
-    }
+        new GdsOption { Label = "Yes", Value = "yes" },
+        new GdsOption { Label = "No", Value = "no" }
+    };
 
     [Fact]
     public void Process_RendersRadioGroupWithSelectedOption()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -74,29 +82,26 @@ public class RspGdsRadioGroupTagHelperTests
             ViewContext = CreateViewContext("AcceptTerms")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
         var radios = doc.DocumentNode.SelectNodes("//input[@type='radio']");
-        Assert.Equal(2, radios.Count);
+        radios.Count.ShouldBe(2);
 
         var checkedRadio = radios.FirstOrDefault(r => r.Attributes["checked"] != null);
-        Assert.NotNull(checkedRadio);
-        Assert.Equal("yes", checkedRadio.Attributes["value"]?.Value);
+        checkedRadio.ShouldNotBeNull();
+        checkedRadio.Attributes["value"]?.Value.ShouldBe("yes");
 
         var label = doc.DocumentNode.SelectSingleNode("//legend//label");
-        Assert.Contains("Do you accept?", label.InnerHtml);
+        label.InnerHtml.ShouldContain("Do you accept?");
     }
 
     [Fact]
     public void Process_RendersError_WhenModelStateHasError()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -108,20 +113,17 @@ public class RspGdsRadioGroupTagHelperTests
             ViewContext = CreateViewContext("Confirm", "Selection is required")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
-        Assert.Contains("govuk-form-group--error", output.Attributes["class"].Value.ToString());
-        Assert.Contains("Selection is required", html);
-        Assert.Contains("govuk-error-message", html);
+        output.Attributes["class"].Value.ToString().ShouldContain("govuk-form-group--error");
+        html.ShouldContain("Selection is required");
+        html.ShouldContain("govuk-error-message");
     }
 
     [Fact]
     public void Process_SelectsFirstValue_WhenModelIsList()
     {
-        // Arrange
         var context = CreateTagHelperContext();
         var output = CreateTagHelperOutput();
 
@@ -133,16 +135,14 @@ public class RspGdsRadioGroupTagHelperTests
             ViewContext = CreateViewContext("Options")
         };
 
-        // Act
         tagHelper.Process(context, output);
 
-        // Assert
         var html = output.Content.GetContent();
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
         var checkedRadio = doc.DocumentNode.SelectSingleNode("//input[@type='radio'][@checked]");
-        Assert.NotNull(checkedRadio);
-        Assert.Equal("no", checkedRadio.Attributes["value"]?.Value);
+        checkedRadio.ShouldNotBeNull();
+        checkedRadio.Attributes["value"]?.Value.ShouldBe("no");
     }
 }

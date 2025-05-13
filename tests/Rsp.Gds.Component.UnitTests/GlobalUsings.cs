@@ -11,4 +11,5 @@ global using Microsoft.AspNetCore.Razor.TagHelpers;
 global using Rsp.Gds.Component.Models;
 global using Rsp.Gds.Component.TagHelpers.Base;
 global using Rsp.Gds.Component.TagHelpers.Specialised;
+global using Shouldly;
 global using Xunit;

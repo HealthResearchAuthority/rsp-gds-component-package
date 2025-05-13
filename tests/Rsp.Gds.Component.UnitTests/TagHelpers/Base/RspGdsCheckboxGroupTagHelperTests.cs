@@ -76,11 +76,11 @@ public class RspGdsCheckboxGroupTagHelperTests
         doc.LoadHtml(html);
 
         var inputs = doc.DocumentNode.SelectNodes("//input[@type='checkbox']");
-        Assert.Equal(3, inputs.Count);
+        inputs.Count.ShouldBe(3);
 
         foreach (var option in GetOptions())
         {
-            Assert.Contains(option, html);
+            html.ShouldContain(option);
         }
     }
 
@@ -107,9 +107,9 @@ public class RspGdsCheckboxGroupTagHelperTests
         var checkedInputs = doc.DocumentNode.SelectNodes("//input[@checked]");
         var values = checkedInputs.Select(i => i.GetAttributeValue("value", "")).ToList();
 
-        Assert.Contains("Email", values);
-        Assert.Contains("Post", values);
-        Assert.DoesNotContain("Phone", values);
+        values.ShouldContain("Email");
+        values.ShouldContain("Post");
+        values.ShouldNotContain("Phone");
     }
 
     [Fact]
@@ -129,8 +129,8 @@ public class RspGdsCheckboxGroupTagHelperTests
         tagHelper.Process(context, output);
 
         var html = output.Content.GetContent();
-        Assert.Contains("You must choose at least one", html);
-        Assert.Contains("govuk-form-group--error", output.Attributes["class"].Value.ToString());
+        html.ShouldContain("You must choose at least one");
+        output.Attributes["class"].Value.ToString().ShouldContain("govuk-form-group--error");
     }
 
     [Fact]
@@ -154,6 +154,6 @@ public class RspGdsCheckboxGroupTagHelperTests
         doc.LoadHtml(html);
 
         var checkedInputs = doc.DocumentNode.SelectNodes("//input[@type='checkbox'][@checked]");
-        Assert.True(checkedInputs == null || checkedInputs.Count == 0);
+        (checkedInputs == null || checkedInputs.Count == 0).ShouldBeTrue();
     }
 }
