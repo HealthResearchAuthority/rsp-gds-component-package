@@ -1,13 +1,10 @@
-﻿using System;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-
-namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
-/// Renders a GOV.UK-styled <select> dropdown for a model-bound property.
-/// Supports optional default option, validation error display, and custom label text.
+///     Renders a GOV.UK-styled
+///     <select>
+///         dropdown for a model-bound property.
+///         Supports optional default option, validation error display, custom label text, and conditional styling.
 /// </summary>
 [HtmlTargetElement("rsp-gds-select", Attributes = ForAttributeName)]
 public class RspGdsSelectTagHelper : TagHelper
@@ -15,43 +12,50 @@ public class RspGdsSelectTagHelper : TagHelper
     private const string ForAttributeName = "asp-for";
 
     /// <summary>
-    /// The model expression this select input is bound to.
-    /// Used to determine the selected value and input name/id.
+    ///     The model expression this select input is bound to.
+    ///     Used to determine the selected value and input name/id.
     /// </summary>
     [HtmlAttributeName(ForAttributeName)]
     public ModelExpression For { get; set; }
 
     /// <summary>
-    /// The label text displayed above the select dropdown.
-    /// If not provided, the model property name is used.
+    ///     The label text displayed above the select dropdown.
+    ///     If not provided, the model property name is used.
     /// </summary>
     [HtmlAttributeName("label-text")]
     public string LabelText { get; set; }
 
     /// <summary>
-    /// The list of options to populate the dropdown with.
-    /// Each option includes a Value and a Label.
+    ///     The list of options to populate the dropdown with.
+    ///     Each option includes a Value and a Label.
     /// </summary>
     [HtmlAttributeName("options")]
     public IEnumerable<GdsOption> Options { get; set; }
 
     /// <summary>
-    /// Whether to include a default disabled option prompting user selection.
-    /// Defaults to true.
+    ///     Whether to include a default disabled option prompting user selection.
+    ///     Defaults to true.
     /// </summary>
     [HtmlAttributeName("include-default-option")]
     public bool IncludeDefaultOption { get; set; } = true;
 
     /// <summary>
-    /// The text to display for the default option.
-    /// Only used if IncludeDefaultOption is true.
-    /// Defaults to "Please select...".
+    ///     The text to display for the default option.
+    ///     Only used if IncludeDefaultOption is true.
+    ///     Defaults to "Please select...".
     /// </summary>
     [HtmlAttributeName("default-option-text")]
     public string DefaultOptionText { get; set; } = "Please select...";
 
     /// <summary>
-    /// Provides access to the current view context, including model state for validation.
+    ///     Indicates whether this select field is conditionally shown.
+    ///     Adds a <c>conditional-field</c> CSS class to the form group container.
+    /// </summary>
+    [HtmlAttributeName("conditional-field")]
+    public bool ConditionalField { get; set; } = false;
+
+    /// <summary>
+    ///     Provides access to the current view context, including model state for validation.
     /// </summary>
     [ViewContext]
     [HtmlAttributeNotBound]
@@ -60,34 +64,45 @@ public class RspGdsSelectTagHelper : TagHelper
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
+
+        // Get the selected value from the model (used to mark <option> as selected)
         var selectedValue = For.Model?.ToString();
 
-        // Retrieve model state to determine if there are validation errors
+        // Retrieve model state to determine if this field has validation errors
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var modelStateEntry);
         var hasError = modelStateEntry?.Errors?.Count > 0;
 
+        // Build the CSS class string for the outer form group container
+        var formGroupClass = "govuk-form-group"
+                             + (ConditionalField ? " conditional-field" : "")
+                             + (hasError ? " govuk-form-group--error" : "");
+
+        // Set up the outer <div> that wraps the label, error, and select
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("class", $"govuk-form-group {(hasError ? "govuk-form-group--error" : "")}");
+        output.Attributes.SetAttribute("id", propertyName); // Add an ID for the group
+        output.Attributes.SetAttribute("class", formGroupClass); // Apply conditional and error classes
 
-        // Label HTML
+        // Render the label HTML, falling back to property name if label text is not provided
         var labelHtml = $@"
-                <label class='govuk-label govuk-label--s' for='{propertyName}'>
-                    {LabelText ?? propertyName}
-                </label>";
+            <label class='govuk-label govuk-label--s' for='{propertyName}'>
+                {LabelText ?? propertyName}
+            </label>";
 
-        // Error message HTML if applicable
+        // Render validation message if an error is present
         var errorHtml = hasError
             ? $"<span class='govuk-error-message'>{modelStateEntry.Errors[0].ErrorMessage}</span>"
             : "";
 
-        // Build <option> tags
+        // Optionally add a default placeholder option (e.g., "Please select...")
         var optionsHtml = IncludeDefaultOption
             ? $"<option value='' disabled {(string.IsNullOrEmpty(selectedValue) ? "selected" : "")}>{DefaultOptionText}</option>"
             : "";
 
+        // Build <option> elements from the supplied list
         optionsHtml += string.Join("\n", Options.Select(option =>
         {
+            // Determine if this option is the selected one
             var selectedAttr = string.Equals(
                 selectedValue?.Trim(),
                 option.Value?.Trim(),
@@ -96,17 +111,19 @@ public class RspGdsSelectTagHelper : TagHelper
                 ? "selected"
                 : "";
 
+            // Create a unique ID for the option (not required for HTML but helpful for accessibility/testing)
             var optionId = $"{propertyName}_{option.Value.Replace(" ", "_")}";
 
             return $@"<option id='{optionId}' value='{option.Value}' {selectedAttr}>{option.Label}</option>";
         }));
 
-        // Final <select> HTML
+        // Compose the <select> element with the generated <option>s
         var selectHtml = $@"
-                <select id='{propertyName}' name='{propertyName}' class='govuk-select'>
-                    {optionsHtml}
-                </select>";
+            <select id='{propertyName}' name='{propertyName}' class='govuk-select'>
+                {optionsHtml}
+            </select>";
 
+        // Inject the combined HTML into the output
         output.Content.SetHtmlContent(labelHtml + errorHtml + selectHtml);
     }
 }

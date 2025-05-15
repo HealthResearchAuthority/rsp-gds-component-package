@@ -58,6 +58,13 @@ public class RspGdsTextareaTagHelper : TagHelper
     public bool Disabled { get; set; } = false;
 
     /// <summary>
+    ///     Indicates whether this textarea is conditionally shown.
+    ///     Adds a <c>conditional-field</c> CSS class to the form group container.
+    /// </summary>
+    [HtmlAttributeName("conditional-field")]
+    public bool ConditionalField { get; set; } = false;
+
+    /// <summary>
     ///     Any additional HTML attributes to include in the textarea element.
     ///     These override or extend the default attributes.
     /// </summary>
@@ -116,18 +123,28 @@ public class RspGdsTextareaTagHelper : TagHelper
     {
         var propertyName = For.Name;
 
+        // Retrieve model state for this field to check for validation errors
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry);
         var hasFieldError = entry != null && entry.Errors.Count > 0;
 
+        // Build the form-group class including conditional and error styles if applicable
+        var formGroupClass = "govuk-form-group"
+                             + (ConditionalField ? " conditional-field" : "")
+                             + (hasFieldError ? " govuk-form-group--error" : "");
+
+        // Set the outer <div> attributes
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("class", $"govuk-form-group {(hasFieldError ? "govuk-form-group--error" : "")}");
+        output.Attributes.SetAttribute("id", propertyName); // Set the ID for the form group
+        output.Attributes.SetAttribute("class", formGroupClass); // Apply styling class
 
+        // Build the label element (fallback to property name if no label text provided)
         var labelHtml = $@"
-                <label class='govuk-label govuk-label--s' for='{propertyName}'>
-                    {LabelText ?? propertyName}
-                </label>";
+            <label class='govuk-label govuk-label--s' for='{propertyName}'>
+                {LabelText ?? propertyName}
+            </label>";
 
+        // Append any field-level validation errors
         var fieldErrorsHtml = "";
         if (hasFieldError)
         {
@@ -137,8 +154,10 @@ public class RspGdsTextareaTagHelper : TagHelper
             }
         }
 
+        // Generate the GOV.UK-compliant <textarea> via helper method
         var textareaHtml = GetTextareaHtml(hasFieldError);
 
+        // Compose the final output: label, error message(s), and textarea field
         output.Content.SetHtmlContent(labelHtml + fieldErrorsHtml + textareaHtml);
     }
 }

@@ -1,37 +1,32 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-
-namespace Rsp.Gds.Component.TagHelpers.Specialised;
+﻿namespace Rsp.Gds.Component.TagHelpers.Specialised;
 
 /// <summary>
-/// Renders a GOV.UK-styled character count textarea with a character or word limit indicator.
-/// Extends <c>RspGdsTextareaTagHelper</c> with support for displaying separate word count validation errors.
+///     Renders a GOV.UK-styled character count textarea with a character or word limit indicator.
+///     Extends <c>RspGdsTextareaTagHelper</c> with support for displaying separate word count validation errors.
 /// </summary>
 [HtmlTargetElement("rsp-gds-character-count-textarea", Attributes = ForAttributeName)]
 public class RspGdsCharacterCountTextareaTagHelper : RspGdsTextareaTagHelper
 {
     /// <summary>
-    /// The name of the model property to check for word/character count validation errors.
-    /// If set, a separate validation message will appear under the textarea.
+    ///     The name of the model property to check for word/character count validation errors.
+    ///     If set, a separate validation message will appear under the textarea.
     /// </summary>
     [HtmlAttributeName("word-count-error-for")]
     public string WordCountErrorProperty { get; set; }
 
     /// <summary>
-    /// Generates the final GOV.UK form group markup including character count module,
-    /// label, validation messages, textarea, and optional word count error message.
+    ///     Generates the final GOV.UK form group markup including character count module,
+    ///     label, validation messages, textarea, and optional word count error message.
     /// </summary>
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
 
-        // Standard field-level error
+        // Get standard validation errors for the field (e.g. required, max length, etc.)
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var fieldEntry);
         var hasFieldError = fieldEntry != null && fieldEntry.Errors.Count > 0;
 
-        // Optional word count error (separate from the field)
+        // Optionally check a separate property for character/word count errors
         ModelStateEntry wordCountEntry = null;
         if (!string.IsNullOrEmpty(WordCountErrorProperty))
         {
@@ -40,22 +35,28 @@ public class RspGdsCharacterCountTextareaTagHelper : RspGdsTextareaTagHelper
 
         var hasWordCountError = wordCountEntry != null && wordCountEntry.Errors.Count > 0;
 
-        // Configure outer form group div
+        // Construct the form group class string, including GOV.UK character count module,
+        // conditional field class, and error styling if applicable
+        var formGroupClass = "govuk-form-group govuk-character-count"
+                             + (ConditionalField ? " conditional-field" : "")
+                             + (hasFieldError ? " govuk-form-group--error" : "");
+
+        // Configure outer <div> wrapper
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("class",
-            $"govuk-form-group govuk-character-count {(hasFieldError ? "govuk-form-group--error" : "")}");
-        output.Attributes.SetAttribute("data-module", "govuk-character-count");
+        output.Attributes.SetAttribute("id", propertyName); // Set unique ID for container
+        output.Attributes.SetAttribute("class", formGroupClass); // Apply conditional/error styling
+        output.Attributes.SetAttribute("data-module", "govuk-character-count"); // Enables JS character count behavior
 
-        // Label
+        // Build the GOV.UK label
         var labelHtml = $@"
-                <div class='govuk-label-wrapper'>
-                    <label class='govuk-label govuk-label--s' for='{propertyName}'>
-                        {LabelText ?? propertyName}
-                    </label>
-                </div>";
+            <div class='govuk-label-wrapper'>
+                <label class='govuk-label govuk-label--s' for='{propertyName}'>
+                    {LabelText ?? propertyName}
+                </label>
+            </div>";
 
-        // Field validation errors
+        // Render all field-level errors (e.g. required, too long)
         var fieldErrorsHtml = "";
         if (hasFieldError)
         {
@@ -65,19 +66,20 @@ public class RspGdsCharacterCountTextareaTagHelper : RspGdsTextareaTagHelper
             }
         }
 
-        // Textarea (from base class)
+        // Render the textarea input, applying error classes if necessary
         var textareaHtml = GetTextareaHtml(hasFieldError);
 
-        // Word count error
+        // Render additional word/character count validation error if present
         var wordCountErrorHtml = "";
         if (hasWordCountError)
         {
             wordCountErrorHtml = $@"
-                    <div class='govuk-character-count__message govuk-error-message'>
-                        {wordCountEntry.Errors[0].ErrorMessage}
-                    </div>";
+                <div class='govuk-character-count__message govuk-error-message'>
+                    {wordCountEntry.Errors[0].ErrorMessage}
+                </div>";
         }
 
+        // Output the final HTML: label, standard errors, textarea, and word count error
         output.Content.SetHtmlContent(labelHtml + fieldErrorsHtml + textareaHtml + wordCountErrorHtml);
     }
 }
