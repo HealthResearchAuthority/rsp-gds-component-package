@@ -1,6 +1,4 @@
-﻿using System.Text.Encodings.Web;
-
-namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
 ///     Renders a GOV.UK-styled date input field with separate Day, Month, and Year inputs.
@@ -60,6 +58,13 @@ public class RspGdsDateInputTagHelper : TagHelper
     public string ErrorKey { get; set; }
 
     /// <summary>
+    ///     Indicates whether the checkbox group is conditionally shown or toggled based on another form input.
+    ///     Adds a <c>conditional-field</c> CSS class to the form group container.
+    /// </summary>
+    [HtmlAttributeName("conditional-field")]
+    public bool ConditionalField { get; set; } = false;
+
+    /// <summary>
     ///     Provides access to the current view context, including ModelState for validation.
     /// </summary>
     [ViewContext]
@@ -68,68 +73,74 @@ public class RspGdsDateInputTagHelper : TagHelper
 
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
-        ViewContext.ViewData.ModelState.TryGetValue(ErrorKey ?? For.Name, out var entry);
-        var hasError = entry?.ValidationState == ModelValidationState.Invalid;
+        var propertyName = For.Name;
+        ViewContext.ViewData.ModelState.TryGetValue(ErrorKey ?? propertyName, out var modelStateEntry);
+        var hasError = modelStateEntry != null && modelStateEntry.Errors.Count > 0;
+
+        var formGroupClass = "govuk-form-group"
+                             + (ConditionalField ? " conditional-field" : "")
+                             + (hasError ? " govuk-form-group--error" : "");
 
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("class", $"govuk-form-group{(hasError ? " govuk-form-group--error" : "")}");
+        output.Attributes.SetAttribute("id", propertyName); // Added ID here
+        output.Attributes.SetAttribute("class", formGroupClass);
 
-        var encodedLabel = HtmlEncoder.Default.Encode(LabelText ?? For.Name);
+        var encodedLabel = HtmlEncoder.Default.Encode(LabelText ?? propertyName);
 
         var labelHtml = $@"
-                <label class='govuk-label' for='{For.Name}'>{encodedLabel}</label>";
+            <label class='govuk-label' for='{propertyName}'>{encodedLabel}</label>";
 
         var hintHtml = !string.IsNullOrEmpty(HintHtml)
             ? $"<div class='govuk-hint'>{HintHtml}</div>"
             : "";
 
         var errorHtml = hasError
-            ? $"<span class='govuk-error-message'>{entry.Errors[0].ErrorMessage}</span>"
+            ? $"<span class='govuk-error-message'>{modelStateEntry.Errors[0].ErrorMessage}</span>"
             : "";
 
         var dayInput = $@"
-                <div class='govuk-date-input__item'>
-                    <div class='govuk-form-group'>
-                        <label class='govuk-label govuk-date-input__label' for='{DayName}'>Day</label>
-                        <input class='govuk-input govuk-date-input__input govuk-input--width-2{(hasError ? " govuk-input--error" : "")}'
-                               id='{DayName}'
-                               name='{DayName}'
-                               type='text'
-                               inputmode='numeric' />
-                    </div>
-                </div>";
+            <div class='govuk-date-input__item'>
+                <div class='govuk-form-group'>
+                    <label class='govuk-label govuk-date-input__label' for='{DayName}'>Day</label>
+                    <input class='govuk-input govuk-date-input__input govuk-input--width-2{(hasError ? " govuk-input--error" : "")}'
+                           id='{DayName}'
+                           name='{DayName}'
+                           type='text'
+                           inputmode='numeric' />
+                </div>
+            </div>";
 
         var monthInput = $@"
-                <div class='govuk-date-input__item'>
-                    <div class='govuk-form-group'>
-                        <label class='govuk-label govuk-date-input__label' for='{MonthName}'>Month</label>
-                        <input class='govuk-input govuk-date-input__input govuk-input--width-2{(hasError ? " govuk-input--error" : "")}'
-                               id='{MonthName}'
-                               name='{MonthName}'
-                               type='text'
-                               inputmode='numeric' />
-                    </div>
-                </div>";
+            <div class='govuk-date-input__item'>
+                <div class='govuk-form-group'>
+                    <label class='govuk-label govuk-date-input__label' for='{MonthName}'>Month</label>
+                    <input class='govuk-input govuk-date-input__input govuk-input--width-2{(hasError ? " govuk-input--error" : "")}'
+                           id='{MonthName}'
+                           name='{MonthName}'
+                           type='text'
+                           inputmode='numeric' />
+                </div>
+            </div>";
 
         var yearInput = $@"
-                <div class='govuk-date-input__item'>
-                    <div class='govuk-form-group'>
-                        <label class='govuk-label govuk-date-input__label' for='{YearName}'>Year</label>
-                        <input class='govuk-input govuk-date-input__input govuk-input--width-4{(hasError ? " govuk-input--error" : "")}'
-                               id='{YearName}'
-                               name='{YearName}'
-                               type='text'
-                               inputmode='numeric' />
-                    </div>
-                </div>";
+            <div class='govuk-date-input__item'>
+                <div class='govuk-form-group'>
+                    <label class='govuk-label govuk-date-input__label' for='{YearName}'>Year</label>
+                    <input class='govuk-input govuk-date-input__input govuk-input--width-4{(hasError ? " govuk-input--error" : "")}'
+                           id='{YearName}'
+                           name='{YearName}'
+                           type='text'
+                           inputmode='numeric' />
+                </div>
+            </div>";
 
         var dateGroupHtml = $@"
-                <div class='govuk-date-input' id='{For.Name}'>
-                    {dayInput}
-                    {monthInput}
-                    {yearInput}
-                </div>";
+            <div class='govuk-date-input' id='{propertyName}_date'>
+                {dayInput}
+                {monthInput}
+                {yearInput}
+            </div>";
 
         output.Content.SetHtmlContent(labelHtml + hintHtml + errorHtml + dateGroupHtml);
     }

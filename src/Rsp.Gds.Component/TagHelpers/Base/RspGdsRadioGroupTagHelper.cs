@@ -1,10 +1,8 @@
-﻿using System;
-
-namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
 ///     Renders a GOV.UK-styled radio button group for a model-bound property.
-///     Supports label text, dynamic options, and displays validation errors.
+///     Supports label text, dynamic options, conditional visibility, and validation errors.
 /// </summary>
 [HtmlTargetElement("rsp-gds-radio-group", Attributes = ForAttributeName)]
 public class RspGdsRadioGroupTagHelper : TagHelper
@@ -30,6 +28,13 @@ public class RspGdsRadioGroupTagHelper : TagHelper
     /// </summary>
     [HtmlAttributeName("options")]
     public IEnumerable<GdsOption> Options { get; set; }
+
+    /// <summary>
+    ///     Indicates whether this radio group is conditionally shown.
+    ///     Adds a <c>conditional-field</c> CSS class to the form group container.
+    /// </summary>
+    [HtmlAttributeName("conditional-field")]
+    public bool ConditionalField { get; set; } = false;
 
     /// <summary>
     ///     Provides access to the current view context, including ModelState for validation.
@@ -58,9 +63,14 @@ public class RspGdsRadioGroupTagHelper : TagHelper
             ? $"<span class='govuk-error-message'>{modelStateEntry.Errors[0].ErrorMessage}</span>"
             : "";
 
+        var formGroupClass = "govuk-form-group"
+                             + (ConditionalField ? " conditional-field" : "")
+                             + (hasError ? " govuk-form-group--error" : "");
+
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("class", $"govuk-form-group {(hasError ? "govuk-form-group--error" : "")}");
+        output.Attributes.SetAttribute("id", propertyName); // Add ID for outer container
+        output.Attributes.SetAttribute("class", formGroupClass);
 
         // Build individual radio items
         var radiosHtml = string.Join("\n", Options.Select(option =>

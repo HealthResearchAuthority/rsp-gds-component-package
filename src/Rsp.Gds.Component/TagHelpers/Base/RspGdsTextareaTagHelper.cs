@@ -58,6 +58,13 @@ public class RspGdsTextareaTagHelper : TagHelper
     public bool Disabled { get; set; } = false;
 
     /// <summary>
+    ///     Indicates whether this textarea is conditionally shown.
+    ///     Adds a <c>conditional-field</c> CSS class to the form group container.
+    /// </summary>
+    [HtmlAttributeName("conditional-field")]
+    public bool ConditionalField { get; set; } = false;
+
+    /// <summary>
     ///     Any additional HTML attributes to include in the textarea element.
     ///     These override or extend the default attributes.
     /// </summary>
@@ -119,9 +126,14 @@ public class RspGdsTextareaTagHelper : TagHelper
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry);
         var hasFieldError = entry != null && entry.Errors.Count > 0;
 
+        var formGroupClass = "govuk-form-group"
+                             + (ConditionalField ? " conditional-field" : "")
+                             + (hasFieldError ? " govuk-form-group--error" : "");
+
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("class", $"govuk-form-group {(hasFieldError ? "govuk-form-group--error" : "")}");
+        output.Attributes.SetAttribute("id", propertyName); // Set the ID
+        output.Attributes.SetAttribute("class", formGroupClass);
 
         var labelHtml = $@"
                 <label class='govuk-label govuk-label--s' for='{propertyName}'>

@@ -1,27 +1,22 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-
-namespace Rsp.Gds.Component.TagHelpers.Specialised;
+﻿namespace Rsp.Gds.Component.TagHelpers.Specialised;
 
 /// <summary>
-/// Renders a GOV.UK-styled character count textarea with a character or word limit indicator.
-/// Extends <c>RspGdsTextareaTagHelper</c> with support for displaying separate word count validation errors.
+///     Renders a GOV.UK-styled character count textarea with a character or word limit indicator.
+///     Extends <c>RspGdsTextareaTagHelper</c> with support for displaying separate word count validation errors.
 /// </summary>
 [HtmlTargetElement("rsp-gds-character-count-textarea", Attributes = ForAttributeName)]
 public class RspGdsCharacterCountTextareaTagHelper : RspGdsTextareaTagHelper
 {
     /// <summary>
-    /// The name of the model property to check for word/character count validation errors.
-    /// If set, a separate validation message will appear under the textarea.
+    ///     The name of the model property to check for word/character count validation errors.
+    ///     If set, a separate validation message will appear under the textarea.
     /// </summary>
     [HtmlAttributeName("word-count-error-for")]
     public string WordCountErrorProperty { get; set; }
 
     /// <summary>
-    /// Generates the final GOV.UK form group markup including character count module,
-    /// label, validation messages, textarea, and optional word count error message.
+    ///     Generates the final GOV.UK form group markup including character count module,
+    ///     label, validation messages, textarea, and optional word count error message.
     /// </summary>
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
@@ -31,7 +26,7 @@ public class RspGdsCharacterCountTextareaTagHelper : RspGdsTextareaTagHelper
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var fieldEntry);
         var hasFieldError = fieldEntry != null && fieldEntry.Errors.Count > 0;
 
-        // Optional word count error (separate from the field)
+        // Optional word count error
         ModelStateEntry wordCountEntry = null;
         if (!string.IsNullOrEmpty(WordCountErrorProperty))
         {
@@ -40,11 +35,15 @@ public class RspGdsCharacterCountTextareaTagHelper : RspGdsTextareaTagHelper
 
         var hasWordCountError = wordCountEntry != null && wordCountEntry.Errors.Count > 0;
 
-        // Configure outer form group div
+        // Build CSS class string
+        var formGroupClass = "govuk-form-group govuk-character-count"
+                             + (ConditionalField ? " conditional-field" : "")
+                             + (hasFieldError ? " govuk-form-group--error" : "");
+
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("class",
-            $"govuk-form-group govuk-character-count {(hasFieldError ? "govuk-form-group--error" : "")}");
+        output.Attributes.SetAttribute("id", propertyName); // Ensure outer container has an ID
+        output.Attributes.SetAttribute("class", formGroupClass);
         output.Attributes.SetAttribute("data-module", "govuk-character-count");
 
         // Label
@@ -55,7 +54,7 @@ public class RspGdsCharacterCountTextareaTagHelper : RspGdsTextareaTagHelper
                     </label>
                 </div>";
 
-        // Field validation errors
+        // Field-level validation errors
         var fieldErrorsHtml = "";
         if (hasFieldError)
         {
@@ -65,10 +64,10 @@ public class RspGdsCharacterCountTextareaTagHelper : RspGdsTextareaTagHelper
             }
         }
 
-        // Textarea (from base class)
+        // Textarea HTML
         var textareaHtml = GetTextareaHtml(hasFieldError);
 
-        // Word count error
+        // Optional word count error message
         var wordCountErrorHtml = "";
         if (hasWordCountError)
         {

@@ -70,6 +70,13 @@ public class RspGdsInputTagHelper : TagHelper
     public IDictionary<string, string> AdditionalAttributes { get; set; } = new Dictionary<string, string>();
 
     /// <summary>
+    ///     Indicates whether this input field is conditionally shown.
+    ///     Adds a <c>conditional-field</c> CSS class to the form group container.
+    /// </summary>
+    [HtmlAttributeName("conditional-field")]
+    public bool ConditionalField { get; set; } = false;
+
+    /// <summary>
     ///     Provides access to the current view context, including ModelState for validation.
     /// </summary>
     [ViewContext]
@@ -84,17 +91,20 @@ public class RspGdsInputTagHelper : TagHelper
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry);
         var hasError = entry != null && entry.Errors.Count > 0;
 
+        var formGroupClass = "govuk-form-group"
+                             + (ConditionalField ? " conditional-field" : "")
+                             + (hasError ? " govuk-form-group--error" : "");
+
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("class", $"govuk-form-group {(hasError ? "govuk-form-group--error" : "")}");
+        output.Attributes.SetAttribute("id", propertyName);
+        output.Attributes.SetAttribute("class", formGroupClass);
 
-        // Build label
         var labelHtml = $@"
                 <label class='govuk-label govuk-label--s' for='{propertyName}'>
                     {LabelText ?? propertyName}
                 </label>";
 
-        // Build errors
         var errorsHtml = "";
         if (hasError)
         {
@@ -104,7 +114,6 @@ public class RspGdsInputTagHelper : TagHelper
             }
         }
 
-        // Build attributes
         var extraAttributes = new Dictionary<string, string>(AdditionalAttributes);
 
         if (Readonly)
@@ -134,7 +143,6 @@ public class RspGdsInputTagHelper : TagHelper
 
         var attrHtml = string.Join(" ", extraAttributes.Select(kvp => $"{kvp.Key}='{kvp.Value}'"));
 
-        // Build input manually without asp-for
         var inputHtml = $@"
                 <input class='govuk-input {WidthClass} {(hasError ? "govuk-input--error" : "")}'
                        id='{propertyName}'
@@ -143,7 +151,6 @@ public class RspGdsInputTagHelper : TagHelper
                        value='{value}'
                        {attrHtml} />";
 
-        // Set final content
         output.Content.SetHtmlContent(labelHtml + errorsHtml + inputHtml);
     }
 }

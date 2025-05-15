@@ -1,13 +1,10 @@
-﻿using System;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-
-namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
-/// Renders a GOV.UK-styled <select> dropdown for a model-bound property.
-/// Supports optional default option, validation error display, and custom label text.
+///     Renders a GOV.UK-styled
+///     <select>
+///         dropdown for a model-bound property.
+///         Supports optional default option, validation error display, custom label text, and conditional styling.
 /// </summary>
 [HtmlTargetElement("rsp-gds-select", Attributes = ForAttributeName)]
 public class RspGdsSelectTagHelper : TagHelper
@@ -15,43 +12,50 @@ public class RspGdsSelectTagHelper : TagHelper
     private const string ForAttributeName = "asp-for";
 
     /// <summary>
-    /// The model expression this select input is bound to.
-    /// Used to determine the selected value and input name/id.
+    ///     The model expression this select input is bound to.
+    ///     Used to determine the selected value and input name/id.
     /// </summary>
     [HtmlAttributeName(ForAttributeName)]
     public ModelExpression For { get; set; }
 
     /// <summary>
-    /// The label text displayed above the select dropdown.
-    /// If not provided, the model property name is used.
+    ///     The label text displayed above the select dropdown.
+    ///     If not provided, the model property name is used.
     /// </summary>
     [HtmlAttributeName("label-text")]
     public string LabelText { get; set; }
 
     /// <summary>
-    /// The list of options to populate the dropdown with.
-    /// Each option includes a Value and a Label.
+    ///     The list of options to populate the dropdown with.
+    ///     Each option includes a Value and a Label.
     /// </summary>
     [HtmlAttributeName("options")]
     public IEnumerable<GdsOption> Options { get; set; }
 
     /// <summary>
-    /// Whether to include a default disabled option prompting user selection.
-    /// Defaults to true.
+    ///     Whether to include a default disabled option prompting user selection.
+    ///     Defaults to true.
     /// </summary>
     [HtmlAttributeName("include-default-option")]
     public bool IncludeDefaultOption { get; set; } = true;
 
     /// <summary>
-    /// The text to display for the default option.
-    /// Only used if IncludeDefaultOption is true.
-    /// Defaults to "Please select...".
+    ///     The text to display for the default option.
+    ///     Only used if IncludeDefaultOption is true.
+    ///     Defaults to "Please select...".
     /// </summary>
     [HtmlAttributeName("default-option-text")]
     public string DefaultOptionText { get; set; } = "Please select...";
 
     /// <summary>
-    /// Provides access to the current view context, including model state for validation.
+    ///     Indicates whether this select field is conditionally shown.
+    ///     Adds a <c>conditional-field</c> CSS class to the form group container.
+    /// </summary>
+    [HtmlAttributeName("conditional-field")]
+    public bool ConditionalField { get; set; } = false;
+
+    /// <summary>
+    ///     Provides access to the current view context, including model state for validation.
     /// </summary>
     [ViewContext]
     [HtmlAttributeNotBound]
@@ -66,9 +70,14 @@ public class RspGdsSelectTagHelper : TagHelper
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var modelStateEntry);
         var hasError = modelStateEntry?.Errors?.Count > 0;
 
+        var formGroupClass = "govuk-form-group"
+                             + (ConditionalField ? " conditional-field" : "")
+                             + (hasError ? " govuk-form-group--error" : "");
+
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("class", $"govuk-form-group {(hasError ? "govuk-form-group--error" : "")}");
+        output.Attributes.SetAttribute("id", propertyName); // Add ID to container
+        output.Attributes.SetAttribute("class", formGroupClass);
 
         // Label HTML
         var labelHtml = $@"
