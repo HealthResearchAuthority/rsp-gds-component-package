@@ -86,25 +86,32 @@ public class RspGdsInputTagHelper : TagHelper
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
+
+        // Get the current value from the model to prefill the input
         var value = For.Model?.ToString() ?? "";
 
+        // Look up model state for validation info
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry);
         var hasError = entry != null && entry.Errors.Count > 0;
 
+        // Build form group CSS classes based on conditional/error state
         var formGroupClass = "govuk-form-group"
                              + (ConditionalField ? " conditional-field" : "")
                              + (hasError ? " govuk-form-group--error" : "");
 
+        // Define outer container element
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("id", propertyName);
-        output.Attributes.SetAttribute("class", formGroupClass);
+        output.Attributes.SetAttribute("id", propertyName); // Add unique ID
+        output.Attributes.SetAttribute("class", formGroupClass); // Add govuk-form-group with modifiers
 
+        // Render the label above the input
         var labelHtml = $@"
-                <label class='govuk-label govuk-label--s' for='{propertyName}'>
-                    {LabelText ?? propertyName}
-                </label>";
+            <label class='govuk-label govuk-label--s' for='{propertyName}'>
+                {LabelText ?? propertyName}
+            </label>";
 
+        // Build error HTML if any validation errors exist
         var errorsHtml = "";
         if (hasError)
         {
@@ -114,8 +121,10 @@ public class RspGdsInputTagHelper : TagHelper
             }
         }
 
+        // Compose additional attributes from TagHelper inputs
         var extraAttributes = new Dictionary<string, string>(AdditionalAttributes);
 
+        // Append readonly/disabled/autocomplete/placeholder if specified
         if (Readonly)
         {
             extraAttributes["readonly"] = "readonly";
@@ -136,21 +145,25 @@ public class RspGdsInputTagHelper : TagHelper
             extraAttributes["placeholder"] = Placeholder;
         }
 
+        // Add ARIA invalid marker if error exists and not already specified
         if (!extraAttributes.ContainsKey("aria-invalid") && hasError)
         {
             extraAttributes["aria-invalid"] = "true";
         }
 
+        // Flatten additional attributes into HTML string format
         var attrHtml = string.Join(" ", extraAttributes.Select(kvp => $"{kvp.Key}='{kvp.Value}'"));
 
+        // Build the final <input> element
         var inputHtml = $@"
-                <input class='govuk-input {WidthClass} {(hasError ? "govuk-input--error" : "")}'
-                       id='{propertyName}'
-                       name='{propertyName}'
-                       type='{InputType}'
-                       value='{value}'
-                       {attrHtml} />";
+            <input class='govuk-input {WidthClass} {(hasError ? "govuk-input--error" : "")}'
+                   id='{propertyName}'
+                   name='{propertyName}'
+                   type='{InputType}'
+                   value='{value}'
+                   {attrHtml} />";
 
+        // Set final output HTML
         output.Content.SetHtmlContent(labelHtml + errorsHtml + inputHtml);
     }
 }

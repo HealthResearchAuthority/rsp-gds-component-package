@@ -74,15 +74,22 @@ public class RspGdsCheckboxGroupTagHelper : TagHelper
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
+
+        // Retrieve model state entry for validation errors
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var modelStateEntry);
         var hasError = modelStateEntry != null && modelStateEntry.Errors.Count > 0;
+
+        // Render error message span if applicable
         var errorHtml = hasError
             ? $"<span class='govuk-error-message'>{modelStateEntry.Errors[0].ErrorMessage}</span>"
             : "";
 
-        var formGroupClass = "govuk-form-group" + (ConditionalField ? " conditional-field" : "") +
-                             (hasError ? " govuk-form-group--error" : "");
+        // Build the form group class with conditional and error styling
+        var formGroupClass = "govuk-form-group"
+                             + (ConditionalField ? " conditional-field" : "")
+                             + (hasError ? " govuk-form-group--error" : "");
 
+        // Set up container element
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
         output.Attributes.SetAttribute("id", propertyName);
@@ -90,6 +97,7 @@ public class RspGdsCheckboxGroupTagHelper : TagHelper
 
         var checkboxesHtml = new List<string>();
 
+        // Case 1: Simple checkbox list using string options
         if (Options?.Any() == true && (For.Model == null || For.Model is IEnumerable<string>))
         {
             var selectedStrings = For.Model as IEnumerable<string> ?? Enumerable.Empty<string>();
@@ -99,19 +107,28 @@ public class RspGdsCheckboxGroupTagHelper : TagHelper
                 var isChecked = selectedStrings.Any(s => string.Equals(s, option, StringComparison.OrdinalIgnoreCase))
                     ? "checked"
                     : "";
+
+                // Sanitize ID for HTML
                 var safeId = $"{propertyName}_{option.Replace(" ", "_".ToLower())}";
+
                 return $@"
-                        <div class='govuk-checkboxes__item'>
-                            <input class='govuk-checkboxes__input' id='{safeId}' name='{propertyName}' type='checkbox' value='{option}' {isChecked} />
-                            <label class='govuk-label govuk-checkboxes__label {LabelCssClass}' for='{safeId}'>{option}</label>
-                        </div>";
+                    <div class='govuk-checkboxes__item'>
+                        <input class='govuk-checkboxes__input' id='{safeId}' name='{propertyName}' type='checkbox' value='{option}' {isChecked} />
+                        <label class='govuk-label govuk-checkboxes__label {LabelCssClass}' for='{safeId}'>{option}</label>
+                    </div>";
             }));
         }
-        else if (For.Model is IEnumerable<object> complexItems && !string.IsNullOrEmpty(ItemLabelProperty) &&
+        // Case 2: Complex object checkbox list
+        else if (For.Model is IEnumerable<object> complexItems &&
+                 !string.IsNullOrEmpty(ItemLabelProperty) &&
                  !string.IsNullOrEmpty(ItemValueProperty))
         {
-            var hiddenProps = (ItemHiddenProperties ?? "").Split(',').Select(p => p.Trim())
-                .Where(p => !string.IsNullOrEmpty(p)).ToList();
+            // Parse and clean hidden field definitions
+            var hiddenProps = (ItemHiddenProperties ?? "")
+                .Split(',')
+                .Select(p => p.Trim())
+                .Where(p => !string.IsNullOrEmpty(p))
+                .ToList();
 
             var index = 0;
             foreach (var item in complexItems)
@@ -121,6 +138,8 @@ public class RspGdsCheckboxGroupTagHelper : TagHelper
                 var valueProp = type.GetProperty(ItemValueProperty);
                 var label = labelProp?.GetValue(item)?.ToString()?.Replace("_", " ") ?? $"Item {index}";
                 var isChecked = (bool?)valueProp?.GetValue(item) == true ? "checked" : "";
+
+                // Format input names/IDs to support model binding
                 var checkboxId = $"{propertyName}_{index}__{ItemValueProperty}";
                 var checkboxName = $"{propertyName}[{index}].{ItemValueProperty}";
 
@@ -130,6 +149,7 @@ public class RspGdsCheckboxGroupTagHelper : TagHelper
                     $"<label class='govuk-label govuk-checkboxes__label {LabelCssClass}' for='{checkboxId}'>{label}</label>"
                 };
 
+                // Add any hidden fields required for postback
                 foreach (var hiddenProp in hiddenProps)
                 {
                     var prop = type.GetProperty(hiddenProp);
@@ -146,17 +166,18 @@ public class RspGdsCheckboxGroupTagHelper : TagHelper
             }
         }
 
+        // Final HTML output with fieldset/legend/checkboxes
         output.Content.SetHtmlContent($@"
-                <fieldset class='govuk-fieldset'>
-                    <legend class='govuk-fieldset__legend govuk-fieldset__legend--l'>
-                        <label class='govuk-label govuk-label--s' for='{propertyName}'>
-                            {LabelText ?? propertyName}
-                        </label>
-                    </legend>
-                    {errorHtml}
-                    <div class='govuk-checkboxes' data-module='govuk-checkboxes' id='{propertyName}_checkboxes'>
-                        {string.Join("\n", checkboxesHtml)}
-                    </div>
-                </fieldset>");
+            <fieldset class='govuk-fieldset'>
+                <legend class='govuk-fieldset__legend govuk-fieldset__legend--l'>
+                    <label class='govuk-label govuk-label--s' for='{propertyName}'>
+                        {LabelText ?? propertyName}
+                    </label>
+                </legend>
+                {errorHtml}
+                <div class='govuk-checkboxes' data-module='govuk-checkboxes' id='{propertyName}_checkboxes'>
+                    {string.Join("\n", checkboxesHtml)}
+                </div>
+            </fieldset>");
     }
 }
