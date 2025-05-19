@@ -80,7 +80,6 @@ public class RspGdsSelectTagHelper : TagHelper
         // Set up the outer <div> that wraps the label, error, and select
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("id", propertyName); // Add an ID for the group
         output.Attributes.SetAttribute("class", formGroupClass); // Apply conditional and error classes
 
         // Render the label HTML, falling back to property name if label text is not provided

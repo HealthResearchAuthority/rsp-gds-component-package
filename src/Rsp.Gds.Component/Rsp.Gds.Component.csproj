@@ -3,7 +3,7 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<PackageId>Rsp.Gds.Component</PackageId>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
 		<Authors>HRA Technology Team</Authors>
 		<Company>Health Research Authority</Company>
 		<Description>Gds Component package that exposes components.</Description>

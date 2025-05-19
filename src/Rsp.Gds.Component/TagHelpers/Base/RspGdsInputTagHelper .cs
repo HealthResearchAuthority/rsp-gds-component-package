@@ -102,7 +102,6 @@ public class RspGdsInputTagHelper : TagHelper
         // Define outer container element
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("id", propertyName); // Add unique ID
         output.Attributes.SetAttribute("class", formGroupClass); // Add govuk-form-group with modifiers
 
         // Render the label above the input

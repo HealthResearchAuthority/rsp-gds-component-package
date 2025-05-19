@@ -44,7 +44,6 @@ public class RspGdsCharacterCountTextareaTagHelper : RspGdsTextareaTagHelper
         // Configure outer <div> wrapper
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("id", propertyName); // Set unique ID for container
         output.Attributes.SetAttribute("class", formGroupClass); // Apply conditional/error styling
         output.Attributes.SetAttribute("data-module", "govuk-character-count"); // Enables JS character count behavior
 
