@@ -135,7 +135,6 @@ public class RspGdsTextareaTagHelper : TagHelper
         // Set the outer <div> attributes
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("id", propertyName); // Set the ID for the form group
         output.Attributes.SetAttribute("class", formGroupClass); // Apply styling class
 
         // Build the label element (fallback to property name if no label text provided)

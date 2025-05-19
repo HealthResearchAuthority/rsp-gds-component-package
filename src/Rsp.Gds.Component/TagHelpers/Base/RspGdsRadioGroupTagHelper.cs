@@ -73,7 +73,6 @@ public class RspGdsRadioGroupTagHelper : TagHelper
         // Define the outer <div> that wraps the radio group.
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("id", propertyName); // Unique ID for the group container
         output.Attributes.SetAttribute("class", formGroupClass); // Apply styling classes
 
         // Build the HTML for each individual radio item.
