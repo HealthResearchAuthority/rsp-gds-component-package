@@ -66,27 +66,20 @@ public class RspGdsDateInputTagHelper : TagHelper
     ///     Indicates whether the checkbox group is conditionally shown or toggled based on another form input.
     ///     Adds a <c>conditional-field</c> CSS class to the form group container.
     /// </summary>
-    [HtmlAttributeName("conditional-field")]
+    [HtmlAttributeName("conditional")]
     public bool ConditionalField { get; set; }
 
     /// <summary>
     ///     Sets the data-parents attribute manually (cannot bind to data-* directly).
     /// </summary>
-    [HtmlAttributeName("dataparents")]
+    [HtmlAttributeName("dataparents-attr")]
     public string DataParentsAttr { get; set; }
 
     /// <summary>
     ///     Sets the data-questionId attribute manually (cannot bind to data-* directly).
     /// </summary>
-    [HtmlAttributeName("dataquestionid")]
+    [HtmlAttributeName("dataquestionid-attr")]
     public string DataQuestionIdAttr { get; set; }
-
-    /// <summary>
-    ///     Binds the error-class-for attribute used by frontend for conditional styling
-    /// </summary>
-    [HtmlAttributeName("error-class-for")]
-    public string ErrorClassFor { get; set; }
-
 
     /// <summary>
     ///     Optional manual override for the container element's id attribute.
@@ -94,6 +87,21 @@ public class RspGdsDateInputTagHelper : TagHelper
     /// </summary>
     [HtmlAttributeName("id")]
     public string HtmlId { get; set; }
+
+    /// <summary>
+    ///     Sets the outer container ID.
+    ///     If not specified, defaults to the 'asp-for' property name.
+    /// </summary>
+    [HtmlAttributeName("field-id")]
+    public string FieldId { get; set; }
+
+    /// <summary>
+    ///     Optional override for validation message text.
+    ///     If not provided, model validation error is used.
+    /// </summary>
+    [HtmlAttributeName("validation-message")]
+    public string ValidationMessage { get; set; }
+
 
     /// <summary>
     ///     Provides access to the current view context, including ModelState for validation.
@@ -105,6 +113,7 @@ public class RspGdsDateInputTagHelper : TagHelper
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
+        var fieldId = !string.IsNullOrEmpty(FieldId) ? FieldId : propertyName.Replace(".", "_");
         var containerId = !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : propertyName;
 
         // Try to get the model state for validation (using custom error key if provided)
@@ -129,9 +138,6 @@ public class RspGdsDateInputTagHelper : TagHelper
         if (!string.IsNullOrWhiteSpace(DataQuestionIdAttr))
             output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
 
-        if (!string.IsNullOrWhiteSpace(ErrorClassFor))
-            output.Attributes.SetAttribute("error-class-for", ErrorClassFor);
-
         // Encode label text to ensure HTML-safe rendering
         var encodedLabel = HtmlEncoder.Default.Encode(LabelText ?? propertyName);
 
@@ -145,8 +151,12 @@ public class RspGdsDateInputTagHelper : TagHelper
             : "";
 
         // Render a validation error message span if applicable
-        var errorHtml = hasError
-            ? $"<span class='govuk-error-message'>{modelStateEntry.Errors[0].ErrorMessage}</span>"
+        var errorMessage = !string.IsNullOrWhiteSpace(ValidationMessage)
+            ? ValidationMessage
+            : modelStateEntry?.Errors.FirstOrDefault()?.ErrorMessage;
+
+        var errorHtml = hasError && !string.IsNullOrWhiteSpace(errorMessage)
+            ? $"<span class='govuk-error-message'>{HtmlEncoder.Default.Encode(errorMessage)}</span>"
             : "";
 
         // Day input field (2-digit width)
@@ -190,7 +200,7 @@ public class RspGdsDateInputTagHelper : TagHelper
 
         // Wrap day/month/year inputs into a GOV.UK date input wrapper
         var dateGroupHtml = $@"
-        <div class='govuk-date-input' id='{propertyName}_date'>
+        <div class='govuk-date-input' id='{fieldId}_date'>
             {dayInput}
             {monthInput}
             {yearInput}
