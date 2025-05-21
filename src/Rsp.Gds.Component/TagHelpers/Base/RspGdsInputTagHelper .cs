@@ -1,11 +1,4 @@
-﻿using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using System.Text.Encodings.Web;
-
-namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
 ///     Renders a GOV.UK-styled single input field, with support for validation messages,
@@ -91,14 +84,6 @@ public class RspGdsInputTagHelper : TagHelper
     public string ErrorKey { get; set; }
 
     /// <summary>
-    ///     Optional key for frontend JS styling or conditional validation logic.
-    /// </summary>
-    [HtmlAttributeName("error-class-for")]
-    public string ErrorClassFor { get; set; }
-
-
-
-    /// <summary>
     ///     A class name or token to apply when a conditional rule matches.
     /// </summary>
     [HtmlAttributeName("conditional-class")]
@@ -141,8 +126,7 @@ public class RspGdsInputTagHelper : TagHelper
     [HtmlAttributeName("label-aria-describedby")]
     public string LabelAriaDescribedBy { get; set; }
 
-    [HtmlAttributeName("hint-id")]
-    public string HintId { get; set; }
+    [HtmlAttributeName("hint-id")] public string HintId { get; set; }
 
     /// <summary>
     ///     Optional override for validation message text.
@@ -182,30 +166,67 @@ public class RspGdsInputTagHelper : TagHelper
 
         // Set optional attributes
         if (!string.IsNullOrWhiteSpace(HtmlId))
+        {
             output.Attributes.SetAttribute("id", HtmlId);
+        }
+
         if (!string.IsNullOrWhiteSpace(ConditionalClass))
+        {
             output.Attributes.SetAttribute("conditional-class", ConditionalClass);
+        }
+
         if (!string.IsNullOrWhiteSpace(DataParentsAttr))
+        {
             output.Attributes.SetAttribute("data-parents", DataParentsAttr);
+        }
+
         if (!string.IsNullOrWhiteSpace(DataQuestionIdAttr))
+        {
             output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
+        }
 
         // Compose input classes
         var inputClass = $"govuk-input {WidthClass}";
         if (!string.IsNullOrWhiteSpace(ConditionalClass))
+        {
             inputClass += $" {ConditionalClass}";
+        }
+
         if (hasError)
+        {
             inputClass += " govuk-input--error";
+        }
 
         // Compose extra attributes
         var extraAttributes = new Dictionary<string, string>(AdditionalAttributes);
-        if (Readonly) extraAttributes["readonly"] = "readonly";
-        if (Disabled) extraAttributes["disabled"] = "disabled";
-        if (!string.IsNullOrEmpty(Autocomplete)) extraAttributes["autocomplete"] = Autocomplete;
-        if (!string.IsNullOrEmpty(Placeholder)) extraAttributes["placeholder"] = Placeholder;
-        if (hasError && !extraAttributes.ContainsKey("aria-invalid")) extraAttributes["aria-invalid"] = "true";
+        if (Readonly)
+        {
+            extraAttributes["readonly"] = "readonly";
+        }
 
-        var attrHtml = string.Join(" ", extraAttributes.Select(kvp => $"{kvp.Key}='{kvp.Value}'"));
+        if (Disabled)
+        {
+            extraAttributes["disabled"] = "disabled";
+        }
+
+        if (!string.IsNullOrEmpty(Autocomplete))
+        {
+            extraAttributes["autocomplete"] = Autocomplete;
+        }
+
+        if (!string.IsNullOrEmpty(Placeholder))
+        {
+            extraAttributes["placeholder"] = Placeholder;
+        }
+
+        if (hasError && !extraAttributes.ContainsKey("aria-invalid"))
+        {
+            extraAttributes["aria-invalid"] = "true";
+        }
+
+        var attrHtml = string.Join(" ", extraAttributes
+            .Where(kvp => !string.IsNullOrEmpty(kvp.Value))
+            .Select(kvp => $"{kvp.Key}='{HtmlEncoder.Default.Encode(kvp.Value)}'"));
 
         var labelAriaDescribedBy = !string.IsNullOrEmpty(LabelAriaDescribedBy) ? LabelAriaDescribedBy : propertyName;
         var hintId = !string.IsNullOrEmpty(HintId) ? HintId : propertyName;
@@ -220,9 +241,16 @@ public class RspGdsInputTagHelper : TagHelper
             : string.Empty;
 
         // Render a validation error message span if applicable
-        var errorMessage = !string.IsNullOrWhiteSpace(ValidationMessage)
-            ? ValidationMessage
-            : entry.Errors[0].ErrorMessage;
+        string errorMessage = null;
+
+        if (!string.IsNullOrWhiteSpace(ValidationMessage))
+        {
+            errorMessage = ValidationMessage;
+        }
+        else if (entry is { Errors.Count: > 0 })
+        {
+            errorMessage = entry.Errors[0].ErrorMessage;
+        }
 
         var errorHtml = hasError && !string.IsNullOrWhiteSpace(errorMessage)
             ? $"<span class='govuk-error-message'>{HtmlEncoder.Default.Encode(errorMessage)}</span>"
