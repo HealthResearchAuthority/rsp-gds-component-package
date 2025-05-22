@@ -1,10 +1,5 @@
 ﻿namespace Rsp.Gds.Component.TagHelpers.Base;
 
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using System.Text.Encodings.Web;
-
 /// <summary>
 ///     Renders a GOV.UK-styled date input field with separate Day, Month, and Year inputs.
 ///     Supports hint text, label customization, and validation error display.
