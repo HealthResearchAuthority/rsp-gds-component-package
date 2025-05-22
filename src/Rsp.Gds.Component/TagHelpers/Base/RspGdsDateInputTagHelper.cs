@@ -128,10 +128,14 @@ public class RspGdsDateInputTagHelper : TagHelper
 
         // Manually set data-* attributes
         if (!string.IsNullOrWhiteSpace(DataParentsAttr))
+        {
             output.Attributes.SetAttribute("data-parents", DataParentsAttr);
+        }
 
         if (!string.IsNullOrWhiteSpace(DataQuestionIdAttr))
+        {
             output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
+        }
 
         // Encode label text to ensure HTML-safe rendering
         var encodedLabel = HtmlEncoder.Default.Encode(LabelText ?? propertyName);
