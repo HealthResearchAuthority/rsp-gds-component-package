@@ -1,8 +1,8 @@
 ﻿namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
-///     Renders a GOV.UK-styled checkbox group based on a model-bound property and a list of options.
-///     Displays validation errors and applies appropriate GOV.UK form styling.
+///     Renders a GOV.UK-styled checkbox group with support for validation,
+///     conditional display, hints, and custom attributes.
 /// </summary>
 [HtmlTargetElement("rsp-gds-checkbox-group", Attributes = ForAttributeName)]
 public class RspGdsCheckboxGroupTagHelper : TagHelper
@@ -65,65 +65,129 @@ public class RspGdsCheckboxGroupTagHelper : TagHelper
     public bool ConditionalField { get; set; } = false;
 
     /// <summary>
-    ///     Provides context about the current view, including model state for validation messages.
+    ///     An optional CSS class applied for conditional display logic.
+    /// </summary>
+    [HtmlAttributeName("conditional-class")]
+    public string ConditionalClass { get; set; }
+
+    /// <summary>
+    ///     Value for the data-parents attribute used for conditional UI logic.
+    /// </summary>
+    [HtmlAttributeName("dataparents-attr")]
+    public string DataParentsAttr { get; set; }
+
+    /// <summary>
+    ///     Value for the data-questionId attribute used for tracking or logic.
+    /// </summary>
+    [HtmlAttributeName("dataquestionid-attr")]
+    public string DataQuestionIdAttr { get; set; }
+
+    /// <summary>
+    ///     Custom error message to show if the model state has errors.
+    /// </summary>
+    [HtmlAttributeName("validation-message")]
+    public string ValidationMessage { get; set; }
+
+    /// <summary>
+    ///     Optional HTML content to show as a hint below the label.
+    /// </summary>
+    [HtmlAttributeName("hint-html")]
+    public string HintHtml { get; set; }
+
+    /// <summary>
+    ///     Optional override for the HTML id of the wrapper element.
+    /// </summary>
+    [HtmlAttributeName("id")]
+    public string HtmlId { get; set; }
+
+    /// <summary>
+    ///     Optional override for the legend size class. Defaults to 'govuk-fieldset__legend--l'.
+    /// </summary>
+    [HtmlAttributeName("legend-class")]
+    public string LegendClass { get; set; } = "govuk-fieldset__legend--l";
+
+    /// <summary>
+    ///     The view context from Razor. Automatically bound.
     /// </summary>
     [ViewContext]
     [HtmlAttributeNotBound]
     public ViewContext ViewContext { get; set; }
 
+    /// <inheritdoc />
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
 
-        // Retrieve model state entry for validation errors
+        // Get validation state for this field
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var modelStateEntry);
-        var hasError = modelStateEntry != null && modelStateEntry.Errors.Count > 0;
+        var hasError = modelStateEntry?.Errors?.Count > 0;
 
-        // Render error message span if applicable
-        var errorHtml = hasError
-            ? $"<span class='govuk-error-message'>{modelStateEntry.Errors[0].ErrorMessage}</span>"
+        // Determine the error message
+        var errorMessage = !string.IsNullOrEmpty(ValidationMessage)
+            ? ValidationMessage
+            : modelStateEntry?.Errors.FirstOrDefault()?.ErrorMessage;
+
+        // Format error HTML
+        var errorHtml = hasError && !string.IsNullOrWhiteSpace(errorMessage)
+            ? $"<span class='govuk-error-message'>{HtmlEncoder.Default.Encode(errorMessage)}</span>"
             : "";
 
-        // Build the form group class with conditional and error styling
+        // Format hint HTML
+        var hintHtml = !string.IsNullOrWhiteSpace(HintHtml)
+            ? $"<div class='govuk-hint'>{HintHtml}</div>"
+            : "";
+
+        // Set up the form-group classes (include error/conditional if necessary)
         var formGroupClass = "govuk-form-group"
                              + (ConditionalField ? " conditional-field" : "")
                              + (hasError ? " govuk-form-group--error" : "");
 
-        // Set up container element
+        // Setup output container
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("id", propertyName);
         output.Attributes.SetAttribute("class", formGroupClass);
 
+        var fieldId = !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : propertyName;
+        output.Attributes.SetAttribute("id", fieldId);
+
+        if (!string.IsNullOrWhiteSpace(ConditionalClass))
+        {
+            output.Attributes.SetAttribute("conditional-class", ConditionalClass);
+        }
+
+        if (!string.IsNullOrWhiteSpace(DataParentsAttr))
+        {
+            output.Attributes.SetAttribute("data-parents", DataParentsAttr);
+        }
+
+        if (!string.IsNullOrWhiteSpace(DataQuestionIdAttr))
+        {
+            output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
+        }
         var checkboxesHtml = new List<string>();
 
-        // Case 1: Simple checkbox list using string options
+        // Case 1: Simple string list binding
         if (Options?.Any() == true && (For.Model == null || For.Model is IEnumerable<string>))
         {
-            var selectedStrings = For.Model as IEnumerable<string> ?? Enumerable.Empty<string>();
+            var selectedValues = For.Model as IEnumerable<string> ?? Enumerable.Empty<string>();
 
-            checkboxesHtml.AddRange(Options.Select(option =>
+            foreach (var option in Options)
             {
-                var isChecked = selectedStrings.Any(s => string.Equals(s, option, StringComparison.OrdinalIgnoreCase))
-                    ? "checked"
-                    : "";
+                var isChecked = selectedValues.Contains(option, StringComparer.OrdinalIgnoreCase) ? "checked" : "";
+                var safeId = $"{propertyName}_{option.Replace(" ", "_")}";
 
-                // Sanitize ID for HTML
-                var safeId = $"{propertyName}_{option.Replace(" ", "_".ToLower())}";
-
-                return $@"
+                checkboxesHtml.Add($@"
                     <div class='govuk-checkboxes__item'>
                         <input class='govuk-checkboxes__input' id='{safeId}' name='{propertyName}' type='checkbox' value='{option}' {isChecked} />
                         <label class='govuk-label govuk-checkboxes__label {LabelCssClass}' for='{safeId}'>{option}</label>
-                    </div>";
-            }));
+                    </div>");
+            }
         }
-        // Case 2: Complex object checkbox list
+        // Case 2: Complex object model binding
         else if (For.Model is IEnumerable<object> complexItems &&
                  !string.IsNullOrEmpty(ItemLabelProperty) &&
                  !string.IsNullOrEmpty(ItemValueProperty))
         {
-            // Parse and clean hidden field definitions
             var hiddenProps = (ItemHiddenProperties ?? "")
                 .Split(',')
                 .Select(p => p.Trim())
@@ -136,10 +200,10 @@ public class RspGdsCheckboxGroupTagHelper : TagHelper
                 var type = item.GetType();
                 var labelProp = type.GetProperty(ItemLabelProperty);
                 var valueProp = type.GetProperty(ItemValueProperty);
+
                 var label = labelProp?.GetValue(item)?.ToString()?.Replace("_", " ") ?? $"Item {index}";
                 var isChecked = (bool?)valueProp?.GetValue(item) == true ? "checked" : "";
 
-                // Format input names/IDs to support model binding
                 var checkboxId = $"{propertyName}_{index}__{ItemValueProperty}";
                 var checkboxName = $"{propertyName}[{index}].{ItemValueProperty}";
 
@@ -149,7 +213,7 @@ public class RspGdsCheckboxGroupTagHelper : TagHelper
                     $"<label class='govuk-label govuk-checkboxes__label {LabelCssClass}' for='{checkboxId}'>{label}</label>"
                 };
 
-                // Add any hidden fields required for postback
+                // Add hidden fields to preserve extra values on postback
                 foreach (var hiddenProp in hiddenProps)
                 {
                     var prop = type.GetProperty(hiddenProp);
@@ -166,18 +230,17 @@ public class RspGdsCheckboxGroupTagHelper : TagHelper
             }
         }
 
-        // Final HTML output with fieldset/legend/checkboxes
+        // Render the fieldset with legend, hint, error, and all checkboxes
         output.Content.SetHtmlContent($@"
-            <fieldset class='govuk-fieldset'>
-                <legend class='govuk-fieldset__legend govuk-fieldset__legend--l'>
-                    <label class='govuk-label govuk-label--s' for='{propertyName}'>
-                        {LabelText ?? propertyName}
-                    </label>
-                </legend>
-                {errorHtml}
-                <div class='govuk-checkboxes' data-module='govuk-checkboxes' id='{propertyName}_checkboxes'>
-                    {string.Join("\n", checkboxesHtml)}
-                </div>
-            </fieldset>");
+<govuk-fieldset>
+    <govuk-fieldset-legend class='{LegendClass}'>
+        {LabelText}
+    </govuk-fieldset-legend>
+    {hintHtml}
+    {errorHtml}
+    <div class='govuk-checkboxes' data-module='govuk-checkboxes' id='{propertyName}_checkboxes'>
+        {string.Join("\n", checkboxesHtml)}
+    </div>
+</govuk-fieldset>");
     }
 }

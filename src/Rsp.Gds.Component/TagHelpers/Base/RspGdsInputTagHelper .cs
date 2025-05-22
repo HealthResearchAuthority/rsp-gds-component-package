@@ -2,7 +2,7 @@
 
 /// <summary>
 ///     Renders a GOV.UK-styled single input field, with support for validation messages,
-///     placeholder text, width styling, readonly/disabled modes, and additional attributes.
+///     placeholder text, conditional display, additional attributes, and frontend logic hooks.
 /// </summary>
 [HtmlTargetElement("rsp-gds-input", Attributes = ForAttributeName)]
 public class RspGdsInputTagHelper : TagHelper
@@ -73,8 +73,68 @@ public class RspGdsInputTagHelper : TagHelper
     ///     Indicates whether this input field is conditionally shown.
     ///     Adds a <c>conditional-field</c> CSS class to the form group container.
     /// </summary>
-    [HtmlAttributeName("conditional-field")]
+    [HtmlAttributeName("conditional")]
     public bool ConditionalField { get; set; } = false;
+
+    /// <summary>
+    ///     An optional error key for model state validation lookup.
+    ///     If omitted, the 'asp-for' name will be used.
+    /// </summary>
+    [HtmlAttributeName("error-key")]
+    public string ErrorKey { get; set; }
+
+    /// <summary>
+    ///     A class name or token to apply when a conditional rule matches.
+    /// </summary>
+    [HtmlAttributeName("conditional-class")]
+    public string ConditionalClass { get; set; }
+
+    /// <summary>
+    ///     The list of parent question IDs this input depends on.
+    ///     Rendered as a 'data-parents' attribute.
+    /// </summary>
+    [HtmlAttributeName("dataparents-attr")]
+    public string DataParentsAttr { get; set; }
+
+    /// <summary>
+    ///     The current question's ID used for conditional tracking.
+    ///     Rendered as a 'data-questionId' attribute.
+    /// </summary>
+    [HtmlAttributeName("dataquestionid-attr")]
+    public string DataQuestionIdAttr { get; set; }
+
+    /// <summary>
+    ///     Hint HTML content (typically rule descriptions) displayed below the label.
+    /// </summary>
+    [HtmlAttributeName("hint-html")]
+    public string HintHtml { get; set; }
+
+    /// <summary>
+    ///     Sets the outer container ID.
+    ///     If not specified, defaults to the 'asp-for' property name.
+    /// </summary>
+    [HtmlAttributeName("id")]
+    public string HtmlId { get; set; }
+
+    /// <summary>
+    ///     Sets the outer container ID.
+    ///     If not specified, defaults to the 'asp-for' property name.
+    /// </summary>
+    [HtmlAttributeName("field-id")]
+    public string FieldId { get; set; }
+
+    [HtmlAttributeName("label-aria-describedby")]
+    public string LabelAriaDescribedBy { get; set; }
+
+    [HtmlAttributeName("hint-id")] public string HintId { get; set; }
+
+    /// <summary>
+    ///     Optional override for validation message text.
+    ///     If not provided, model validation error is used.
+    /// </summary>
+    [HtmlAttributeName("validation-message")]
+    public string ValidationMessage { get; set; }
+
 
     /// <summary>
     ///     Provides access to the current view context, including ModelState for validation.
@@ -83,47 +143,62 @@ public class RspGdsInputTagHelper : TagHelper
     [HtmlAttributeNotBound]
     public ViewContext ViewContext { get; set; }
 
+    /// <inheritdoc />
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
-
-        // Get the current value from the model to prefill the input
+        var fieldId = !string.IsNullOrEmpty(FieldId) ? FieldId : propertyName.Replace(".", "_");
         var value = For.Model?.ToString() ?? "";
 
-        // Look up model state for validation info
-        ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry);
+        // Check for validation errors
+        ViewContext.ViewData.ModelState.TryGetValue(ErrorKey ?? propertyName, out var entry);
         var hasError = entry != null && entry.Errors.Count > 0;
 
-        // Build form group CSS classes based on conditional/error state
+        // Build the CSS class for the form group
         var formGroupClass = "govuk-form-group"
                              + (ConditionalField ? " conditional-field" : "")
                              + (hasError ? " govuk-form-group--error" : "");
 
-        // Define outer container element
+        // Outer container
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("class", formGroupClass); // Add govuk-form-group with modifiers
+        output.Attributes.SetAttribute("class", formGroupClass);
 
-        // Render the label above the input
-        var labelHtml = $@"
-            <label class='govuk-label govuk-label--s' for='{propertyName}'>
-                {LabelText ?? propertyName}
-            </label>";
-
-        // Build error HTML if any validation errors exist
-        var errorsHtml = "";
-        if (hasError)
+        // Set optional attributes
+        if (!string.IsNullOrWhiteSpace(HtmlId))
         {
-            foreach (var error in entry.Errors)
-            {
-                errorsHtml += $"<span class='govuk-error-message'>{error.ErrorMessage}</span>";
-            }
+            output.Attributes.SetAttribute("id", HtmlId);
         }
 
-        // Compose additional attributes from TagHelper inputs
-        var extraAttributes = new Dictionary<string, string>(AdditionalAttributes);
+        if (!string.IsNullOrWhiteSpace(ConditionalClass))
+        {
+            output.Attributes.SetAttribute("conditional-class", ConditionalClass);
+        }
 
-        // Append readonly/disabled/autocomplete/placeholder if specified
+        if (!string.IsNullOrWhiteSpace(DataParentsAttr))
+        {
+            output.Attributes.SetAttribute("data-parents", DataParentsAttr);
+        }
+
+        if (!string.IsNullOrWhiteSpace(DataQuestionIdAttr))
+        {
+            output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
+        }
+
+        // Compose input classes
+        var inputClass = $"govuk-input {WidthClass}";
+        if (!string.IsNullOrWhiteSpace(ConditionalClass))
+        {
+            inputClass += $" {ConditionalClass}";
+        }
+
+        if (hasError)
+        {
+            inputClass += " govuk-input--error";
+        }
+
+        // Compose extra attributes
+        var extraAttributes = new Dictionary<string, string>(AdditionalAttributes);
         if (Readonly)
         {
             extraAttributes["readonly"] = "readonly";
@@ -144,25 +219,53 @@ public class RspGdsInputTagHelper : TagHelper
             extraAttributes["placeholder"] = Placeholder;
         }
 
-        // Add ARIA invalid marker if error exists and not already specified
-        if (!extraAttributes.ContainsKey("aria-invalid") && hasError)
+        if (hasError && !extraAttributes.ContainsKey("aria-invalid"))
         {
             extraAttributes["aria-invalid"] = "true";
         }
 
-        // Flatten additional attributes into HTML string format
-        var attrHtml = string.Join(" ", extraAttributes.Select(kvp => $"{kvp.Key}='{kvp.Value}'"));
+        var attrHtml = string.Join(" ", extraAttributes
+            .Where(kvp => !string.IsNullOrEmpty(kvp.Value))
+            .Select(kvp => $"{kvp.Key}='{HtmlEncoder.Default.Encode(kvp.Value)}'"));
 
-        // Build the final <input> element
+        var labelAriaDescribedBy = !string.IsNullOrEmpty(LabelAriaDescribedBy) ? LabelAriaDescribedBy : propertyName;
+        var hintId = !string.IsNullOrEmpty(HintId) ? HintId : propertyName;
+
+        var labelHtml = $@"
+    <label class='govuk-label' for='{fieldId}' aria-describedby='{labelAriaDescribedBy}'>
+        {LabelText ?? propertyName}
+    </label>";
+
+        var hintHtml = !string.IsNullOrEmpty(HintHtml)
+            ? $"<div id='{hintId}' class='govuk-hint'>{HintHtml}</div>"
+            : string.Empty;
+
+        // Render a validation error message span if applicable
+        string errorMessage = null;
+
+        if (!string.IsNullOrWhiteSpace(ValidationMessage))
+        {
+            errorMessage = ValidationMessage;
+        }
+        else if (entry is { Errors.Count: > 0 })
+        {
+            errorMessage = entry.Errors[0].ErrorMessage;
+        }
+
+        var errorHtml = hasError && !string.IsNullOrWhiteSpace(errorMessage)
+            ? $"<span class='govuk-error-message'>{HtmlEncoder.Default.Encode(errorMessage)}</span>"
+            : "";
+
+        // Build input field
         var inputHtml = $@"
-            <input class='govuk-input {WidthClass} {(hasError ? "govuk-input--error" : "")}'
-                   id='{propertyName}'
+            <input class='{inputClass}'
+                   id='{fieldId}'
                    name='{propertyName}'
                    type='{InputType}'
                    value='{value}'
                    {attrHtml} />";
 
-        // Set final output HTML
-        output.Content.SetHtmlContent(labelHtml + errorsHtml + inputHtml);
+        // Final output
+        output.Content.SetHtmlContent(labelHtml + hintHtml + errorHtml + inputHtml);
     }
 }

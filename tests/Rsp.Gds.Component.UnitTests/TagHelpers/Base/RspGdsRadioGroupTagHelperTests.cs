@@ -78,7 +78,12 @@ public class RspGdsRadioGroupTagHelperTests
         {
             For = CreateModelExpression("AcceptTerms", "yes"),
             LabelText = "Do you accept?",
-            Options = GetOptions(),
+            Options = new List<GdsOption>
+            {
+                new GdsOption { Label = "Yes", Value = "yes" },
+                new GdsOption { Label = "No", Value = "no" }
+            },
+            QuestionId = "AcceptTerms",
             ViewContext = CreateViewContext("AcceptTerms")
         };
 
@@ -88,16 +93,21 @@ public class RspGdsRadioGroupTagHelperTests
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
+        // Ensure two radio inputs were rendered
         var radios = doc.DocumentNode.SelectNodes("//input[@type='radio']");
         radios.Count.ShouldBe(2);
 
+        // Ensure the correct radio is marked as checked
         var checkedRadio = radios.FirstOrDefault(r => r.Attributes["checked"] != null);
         checkedRadio.ShouldNotBeNull();
         checkedRadio.Attributes["value"]?.Value.ShouldBe("yes");
 
-        var label = doc.DocumentNode.SelectSingleNode("//legend//label");
-        label.InnerHtml.ShouldContain("Do you accept?");
+        // Ensure the legend contains the label text (not wrapped in <label>)
+        var legend = doc.DocumentNode.SelectSingleNode("//govuk-fieldset-legend");
+        legend.ShouldNotBeNull();
+        legend.InnerText.ShouldContain("Do you accept?");
     }
+
 
     [Fact]
     public void Process_RendersError_WhenModelStateHasError()
