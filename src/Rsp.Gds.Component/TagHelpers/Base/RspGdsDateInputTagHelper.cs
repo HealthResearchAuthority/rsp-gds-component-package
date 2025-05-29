@@ -24,6 +24,12 @@ public class RspGdsDateInputTagHelper : TagHelper
     public string DayName { get; set; }
 
     /// <summary>
+    ///     Gets or sets the pre-filled value for the "Day" input field.
+    /// </summary>
+    [HtmlAttributeName("day-value")]
+    public string? DayValue { get; set; }
+
+    /// <summary>
     ///     The name attribute for the "Month" input field.
     ///     Also used as the input's HTML id.
     /// </summary>
@@ -31,11 +37,23 @@ public class RspGdsDateInputTagHelper : TagHelper
     public string MonthName { get; set; }
 
     /// <summary>
+    ///     Gets or sets the pre-filled value for the "Month" input field.
+    /// </summary>
+    [HtmlAttributeName("month-value")]
+    public string? MonthValue { get; set; }
+
+    /// <summary>
     ///     The name attribute for the "Year" input field.
     ///     Also used as the input's HTML id.
     /// </summary>
     [HtmlAttributeName("year-name")]
     public string YearName { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the pre-filled value for the "Year" input field.
+    /// </summary>
+    [HtmlAttributeName("year-value")]
+    public string? YearValue { get; set; }
 
     /// <summary>
     ///     The label text to be displayed above the date input.
@@ -96,7 +114,6 @@ public class RspGdsDateInputTagHelper : TagHelper
     /// </summary>
     [HtmlAttributeName("validation-message")]
     public string ValidationMessage { get; set; }
-
 
     /// <summary>
     ///     Provides access to the current view context, including ModelState for validation.
@@ -167,7 +184,8 @@ public class RspGdsDateInputTagHelper : TagHelper
                        id='{DayName}'
                        name='{DayName}'
                        type='text'
-                       inputmode='numeric' />
+                       inputmode='numeric'
+                       value='{HtmlEncoder.Default.Encode(DayValue ?? "")}' />
             </div>
         </div>";
 
@@ -180,7 +198,8 @@ public class RspGdsDateInputTagHelper : TagHelper
                        id='{MonthName}'
                        name='{MonthName}'
                        type='text'
-                       inputmode='numeric' />
+                       inputmode='numeric'
+                       value='{HtmlEncoder.Default.Encode(MonthValue ?? "")}' />
             </div>
         </div>";
 
@@ -193,7 +212,8 @@ public class RspGdsDateInputTagHelper : TagHelper
                        id='{YearName}'
                        name='{YearName}'
                        type='text'
-                       inputmode='numeric' />
+                       inputmode='numeric'
+                       value='{HtmlEncoder.Default.Encode(YearValue ?? "")}' />
             </div>
         </div>";
 
