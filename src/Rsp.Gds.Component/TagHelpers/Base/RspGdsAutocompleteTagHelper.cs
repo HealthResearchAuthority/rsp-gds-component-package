@@ -132,10 +132,14 @@ public class RspGdsAutocompleteTagHelper : TagHelper
         }
 
         if (!string.IsNullOrWhiteSpace(DataParentsAttr))
+        {
             output.Attributes.SetAttribute("data-parents", DataParentsAttr);
+        }
 
         if (!string.IsNullOrWhiteSpace(DataQuestionIdAttr))
+        {
             output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
+        }
 
         var labelDescribedBy = !string.IsNullOrEmpty(LabelAriaDescribedBy)
             ? LabelAriaDescribedBy

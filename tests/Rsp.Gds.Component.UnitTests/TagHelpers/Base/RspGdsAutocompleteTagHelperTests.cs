@@ -1,15 +1,4 @@
-﻿using HtmlAgilityPack;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using Rsp.Gds.Component.TagHelpers.Base;
-using Shouldly;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Xunit;
-
-namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base
+﻿namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base
 {
     public class RspGdsAutocompleteTagHelperTests
     {
