@@ -1,13 +1,4 @@
-﻿/**
- * Initializes the accessible autocomplete functionality for a given input field.
- *
- * @param {string} autoCompleteInputId - The ID for the visible autocomplete input field.
- * @param {string} inputIdForSubmission - The ID of the hidden input field to store the final value.
- * @param {string} defaultValue - The default text to pre-fill in the autocomplete.
- * @param {string} apiUrl - The endpoint to call for suggestions.
- * @param {string} containerId - The container DOM element to attach the autocomplete UI to.
- */
-function initAutocomplete(autoCompleteInputId, inputIdForSubmission, defaultValue, apiUrl, containerId) {
+﻿function initAutocomplete(autoCompleteInputId, inputIdForSubmission, defaultValue, apiUrl, containerId) {
     const beforeSuggestionsText = 'Suggestions';
     const afterSuggestionsText = 'Continue entering to improve suggestions';
     const noResultsText = 'No suggestions found.';
@@ -15,7 +6,7 @@ function initAutocomplete(autoCompleteInputId, inputIdForSubmission, defaultValu
     let requestToken = 0;
 
     accessibleAutocomplete({
-        element: document.querySelector(`#${containerId}`),
+        element: document.getElementById(containerId),
         id: autoCompleteInputId,
         defaultValue: defaultValue,
         minLength: 1,
@@ -31,8 +22,8 @@ function initAutocomplete(autoCompleteInputId, inputIdForSubmission, defaultValu
 
             if (query.length < 3) {
                 populateResults([]);
-                $(`.autocomplete__menu`).attr('data-before-suggestions', '');
-                $(`.autocomplete__menu`).attr('data-after-suggestions', afterSuggestionsText);
+                $('.autocomplete__menu').attr('data-before-suggestions', '');
+                $('.autocomplete__menu').attr('data-after-suggestions', afterSuggestionsText);
                 return;
             }
 
@@ -43,24 +34,19 @@ function initAutocomplete(autoCompleteInputId, inputIdForSubmission, defaultValu
                 dataType: 'json',
                 success: function (data) {
                     if (currentToken !== requestToken) return;
-
-                    const currentValue = $(`#${autoCompleteInputId}`).val();
-                    if (!currentValue || currentValue.length < 3) return;
-
                     if (!data || data.length === 0) {
                         populateResults([]);
                         return;
                     }
 
                     resultsFound = true;
-                    $(`.autocomplete__menu`).attr('data-before-suggestions', beforeSuggestionsText);
-                    $(`.autocomplete__menu`).attr('data-after-suggestions', afterSuggestionsText);
+                    $('.autocomplete__menu').attr('data-before-suggestions', beforeSuggestionsText);
+                    $('.autocomplete__menu').attr('data-after-suggestions', afterSuggestionsText);
                     populateResults(data);
                     $(`#${inputIdForSubmission}`).val('');
                 },
                 error: function () {
                     if (currentToken !== requestToken) return;
-
                     console.error('Error fetching suggestions from', apiUrl);
                     populateResults([]);
                 }
@@ -73,45 +59,39 @@ function initAutocomplete(autoCompleteInputId, inputIdForSubmission, defaultValu
 
         templates: {
             suggestion: function (suggestion) {
-                const query = $(`#${autoCompleteInputId}`).val();
-                const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const regex = new RegExp('(' + escapedQuery + ')', 'gi');
+                const $input = $(`#${autoCompleteInputId}`);
+                const query = $input.length ? $input.val() : '';
 
-                if (resultsFound) {
-                    return suggestion.replace(regex, '<strong>$1</strong>');
+                if (!query || !resultsFound) {
+                    return suggestion;
                 }
 
-                $(`.autocomplete__menu`).attr('data-before-suggestions', '');
-                $(`.autocomplete__menu`).attr('data-after-suggestions', '');
-                return '';
+                const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(${escapedQuery})`, 'gi');
+                return suggestion.replace(regex, '<strong>$1</strong>');
             }
         },
 
         tNoResults: function () {
-            const query = $(`#${autoCompleteInputId}`).val();
-            if (query.length < 3) {
-                $(`.autocomplete__menu`).attr('data-before-suggestions', afterSuggestionsText);
-                $(`.autocomplete__menu`).attr('data-after-suggestions', '');
-                return '';
-            }
+            const $input = $(`#${autoCompleteInputId}`);
+            const query = $input.length ? $input.val() : '';
+
+            if (!query || query.length < 3) return '';
 
             $(`#${inputIdForSubmission}`).val('');
-            $(`.autocomplete__menu`).attr('data-before-suggestions', '');
-            $(`.autocomplete__menu`).attr('data-after-suggestions', '');
             return noResultsText;
         }
     });
 
-    // Hide original fallback input and label, show the JS-enabled input/label
-    $(`#${inputIdForSubmission}`).hide();
+    // Hide fallback input/label just in case
+    $(`#${inputIdForSubmission}`).addClass('js-hidden');
     $(`label[for="${inputIdForSubmission}"]`).hide();
-    $(`label[for="${autoCompleteInputId}"]`).show();
 
-    // Clear hidden input and menu if user clears visible input
+    // Clear hidden field if input is cleared
     $(`#${autoCompleteInputId}`).on('input', function () {
         if (!this.value) {
             $(`#${inputIdForSubmission}`).val('');
-            $(`.autocomplete__menu`).html('');
+            $('.autocomplete__menu').html('');
             resultsFound = false;
         }
     });
