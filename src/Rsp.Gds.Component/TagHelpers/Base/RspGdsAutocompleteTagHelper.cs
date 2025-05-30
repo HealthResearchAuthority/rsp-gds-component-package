@@ -80,6 +80,18 @@ public class RspGdsAutocompleteTagHelper : TagHelper
     public string LabelAriaDescribedBy { get; set; }
 
     /// <summary>
+    ///     Optional ID for the outer container.
+    /// </summary>
+    [HtmlAttributeName("id")]
+    public string HtmlId { get; set; }
+
+    /// <summary>
+    ///     Optionally override the generated input id (defaults to asp-for name).
+    /// </summary>
+    [HtmlAttributeName("field-id")]
+    public string FieldId { get; set; }
+
+    /// <summary>
     ///     Provides access to the current view context, including model state for validation.
     /// </summary>
     [ViewContext]
@@ -90,13 +102,12 @@ public class RspGdsAutocompleteTagHelper : TagHelper
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
-        var fieldId = propertyName.Replace(".", "_");
-        var hiddenInputId = fieldId + "_Text";
+        var fieldId = !string.IsNullOrEmpty(FieldId) ? FieldId : propertyName.Replace(".", "_");
+        var hiddenInputId = fieldId;
         var autoInputId = fieldId + "_autocomplete";
         var containerId = fieldId + "_autocomplete_container";
         var value = For.Model?.ToString() ?? "";
 
-        // Determine if there's a validation error
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var modelState);
         var hasError = modelState != null && modelState.Errors.Any();
 
@@ -115,17 +126,17 @@ public class RspGdsAutocompleteTagHelper : TagHelper
         output.TagMode = TagMode.StartTagAndEndTag;
         output.Attributes.SetAttribute("class", formGroupClass);
 
-        if (!string.IsNullOrWhiteSpace(DataParentsAttr))
+        if (!string.IsNullOrWhiteSpace(HtmlId))
         {
-            output.Attributes.SetAttribute("data-parents", DataParentsAttr);
+            output.Attributes.SetAttribute("id", HtmlId);
         }
+
+        if (!string.IsNullOrWhiteSpace(DataParentsAttr))
+            output.Attributes.SetAttribute("data-parents", DataParentsAttr);
 
         if (!string.IsNullOrWhiteSpace(DataQuestionIdAttr))
-        {
             output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
-        }
 
-        // Label and hint
         var labelDescribedBy = !string.IsNullOrEmpty(LabelAriaDescribedBy)
             ? LabelAriaDescribedBy
             : !string.IsNullOrEmpty(HintId)
@@ -133,9 +144,10 @@ public class RspGdsAutocompleteTagHelper : TagHelper
                 : fieldId + "-hint";
 
         var encodedLabel = HtmlEncoder.Default.Encode(LabelText ?? propertyName);
+
         var labelHtml = $@"
-<label class='govuk-label' for='{hiddenInputId}' aria-describedby='{labelDescribedBy}'>{encodedLabel}</label>
-<label class='govuk-label' for='{autoInputId}' style='display:none' aria-describedby='{labelDescribedBy}'>{encodedLabel}</label>";
+<label class='govuk-label js-hidden' for='{hiddenInputId}' aria-describedby='{labelDescribedBy}'>{encodedLabel}</label>
+<label class='govuk-label' for='{autoInputId}' aria-describedby='{labelDescribedBy}'>{encodedLabel}</label>";
 
         var hintHtml = !string.IsNullOrWhiteSpace(HintHtml)
             ? $"<div id='{labelDescribedBy}' class='govuk-hint'>{HintHtml}</div>"
@@ -145,25 +157,21 @@ public class RspGdsAutocompleteTagHelper : TagHelper
             ? $"<span class='govuk-error-message'>{HtmlEncoder.Default.Encode(ValidationMessage ?? modelState.Errors[0].ErrorMessage)}</span>"
             : string.Empty;
 
-        // Hidden input (used for submission)
         var hiddenInputHtml = $@"
 <input id='{hiddenInputId}'
        name='{propertyName}'
        type='text'
-       class='govuk-input {WidthClass}'
+       class='govuk-input {WidthClass} js-hidden'
        value='{HtmlEncoder.Default.Encode(value)}' />";
 
-        // Autocomplete container
         var containerHtml = $"<div id='{containerId}'></div>";
 
-        // Init script
         var initScript = $@"<script>
 document.addEventListener('DOMContentLoaded', function () {{
     initAutocomplete('{autoInputId}', '{hiddenInputId}', '{HtmlEncoder.Default.Encode(value)}', '{ApiUrl}', '{containerId}');
 }});
 </script>";
 
-        // Final HTML output
         output.Content.SetHtmlContent(labelHtml + hintHtml + errorHtml + hiddenInputHtml + containerHtml + initScript);
     }
 }

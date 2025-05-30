@@ -6,10 +6,9 @@
 		<EnableDefaultItems>true</EnableDefaultItems>
 		<EnableStaticWebAssets>true</EnableStaticWebAssets>
 		<StaticWebAssetBasePath>rsp-gds-component</StaticWebAssetBasePath>
-		<!-- Optional but good for namespacing -->
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PackageId>Rsp.Gds.Component</PackageId>
-		<Version>1.0.3</Version>
+		<Version>1.0.4</Version>
 		<Authors>HRA Technology Team</Authors>
 		<Company>Health Research Authority</Company>
 		<Description>Gds Component package that exposes components.</Description>
@@ -18,6 +17,7 @@
 		<RepositoryUrl>https://dev.azure.com/futureiras/Research%20Systems%20Programme/_git/rsp-gds-component-package</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<RootNamespace>Rsp.Gds.Component</RootNamespace>
+		<RazorLangVersion>9.0</RazorLangVersion>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -25,7 +25,7 @@
 		<NoWarn>$(NoWarn);1591</NoWarn>
 		<DebugType>embedded</DebugType>
 		<DebugSymbols>true</DebugSymbols>
-		<ContinuousIntegrationBuild>True</ContinuousIntegrationBuild>
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 	</PropertyGroup>
 
