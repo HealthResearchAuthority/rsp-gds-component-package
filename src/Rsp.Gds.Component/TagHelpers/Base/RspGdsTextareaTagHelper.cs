@@ -1,4 +1,11 @@
-﻿namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+using System.Text;
+using System.Text.Encodings.Web;
+
+namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
 ///     Renders a GOV.UK-styled
@@ -7,24 +14,8 @@
 ///         Displays validation errors and allows for additional attributes and readonly/disabled states.
 /// </summary>
 [HtmlTargetElement("rsp-gds-textarea", Attributes = ForAttributeName)]
-public class RspGdsTextareaTagHelper : TagHelper
+public class RspGdsTextareaTagHelper : RspGdsTagHelperBase
 {
-    protected const string ForAttributeName = "asp-for";
-
-    /// <summary>
-    ///     The model expression this textarea is bound to.
-    ///     Used for setting the field name, id, and initial value.
-    /// </summary>
-    [HtmlAttributeName(ForAttributeName)]
-    public ModelExpression For { get; set; }
-
-    /// <summary>
-    ///     The label text displayed above the textarea.
-    ///     If not provided, the model property name is used.
-    /// </summary>
-    [HtmlAttributeName("label-text")]
-    public string LabelText { get; set; }
-
     /// <summary>
     ///     The GOV.UK width utility class applied to the textarea.
     ///     Defaults to "govuk-!-width-full".
@@ -46,46 +37,13 @@ public class RspGdsTextareaTagHelper : TagHelper
     public string Placeholder { get; set; }
 
     /// <summary>
-    ///     If true, the textarea is marked as readonly.
-    /// </summary>
-    [HtmlAttributeName("readonly")]
-    public bool Readonly { get; set; } = false;
-
-    /// <summary>
-    ///     If true, the textarea is disabled and cannot be interacted with.
-    /// </summary>
-    [HtmlAttributeName("disabled")]
-    public bool Disabled { get; set; } = false;
-
-    /// <summary>
-    ///     Indicates whether this textarea is conditionally shown.
-    ///     Adds a <c>conditional-field</c> CSS class to the form group container.
-    /// </summary>
-    [HtmlAttributeName("conditional-field")]
-    public bool ConditionalField { get; set; } = false;
-
-    /// <summary>
-    ///     Any additional HTML attributes to include in the textarea element.
-    ///     These override or extend the default attributes.
-    /// </summary>
-    [HtmlAttributeName("additional-attributes")]
-    public IDictionary<string, string> AdditionalAttributes { get; set; } = new Dictionary<string, string>();
-
-    /// <summary>
-    ///     Provides access to the current view context, including ModelState for validation.
-    /// </summary>
-    [ViewContext]
-    [HtmlAttributeNotBound]
-    public ViewContext ViewContext { get; set; }
-
-    /// <summary>
     ///     Builds the raw HTML for the GOV.UK textarea element including validation class and any additional attributes.
     /// </summary>
     /// <param name="hasFieldError">Whether a validation error is present for this field.</param>
+    /// <param name="propertyName">The name of the property to bind.</param>
     /// <returns>Raw HTML string for the textarea element.</returns>
-    protected string GetTextareaHtml(bool hasFieldError)
+    protected string GetTextareaHtml(bool hasFieldError, string propertyName)
     {
-        var propertyName = For.Name;
         var value = For.Model?.ToString() ?? "";
 
         var extraAttributes = new Dictionary<string, string>(AdditionalAttributes);
@@ -107,56 +65,35 @@ public class RspGdsTextareaTagHelper : TagHelper
 
         extraAttributes["rows"] = Rows.ToString();
 
-        var attrHtml = string.Join(" ", extraAttributes.Select(kvp => $"{kvp.Key}='{kvp.Value}'"));
+        var attrHtml = string.Join(" ", extraAttributes.Select(kvp => $"{kvp.Key}='{HtmlEncoder.Default.Encode(kvp.Value)}'"));
 
         return $@"
                 <textarea class='govuk-textarea {WidthClass} {(hasFieldError ? "govuk-textarea--error" : "")}'
                           id='{propertyName}'
                           name='{propertyName}'
-                          {attrHtml}>{value}</textarea>";
+                          {attrHtml}>{HtmlEncoder.Default.Encode(value)}</textarea>";
     }
 
-    /// <summary>
-    ///     Generates the final GOV.UK form group markup, including label, errors, and textarea.
-    /// </summary>
+    /// <inheritdoc />
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
+        var fieldId = !string.IsNullOrEmpty(FieldId) ? FieldId : propertyName;
 
-        // Retrieve model state for this field to check for validation errors
-        ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry);
-        var hasFieldError = entry != null && entry.Errors.Count > 0;
+        SetContainerAttributes(output, propertyName);
 
-        // Build the form-group class including conditional and error styles if applicable
-        var formGroupClass = "govuk-form-group"
-                             + (ConditionalField ? " conditional-field" : "")
-                             + (hasFieldError ? " govuk-form-group--error" : "");
+        var hasError = ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry) && entry.Errors.Count > 0;
 
-        // Set the outer <div> attributes
-        output.TagName = "div";
-        output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("class", formGroupClass); // Apply styling class
+        var errorHtml = BuildErrorHtml(propertyName);
+        var hintHtml = BuildHintHtml(fieldId);
 
-        // Build the label element (fallback to property name if no label text provided)
         var labelHtml = $@"
             <label class='govuk-label govuk-label--s' for='{propertyName}'>
                 {LabelText ?? propertyName}
             </label>";
 
-        // Append any field-level validation errors
-        var fieldErrorsHtml = "";
-        if (hasFieldError)
-        {
-            foreach (var error in entry.Errors)
-            {
-                fieldErrorsHtml += $"<span class='govuk-error-message'>{error.ErrorMessage}</span>";
-            }
-        }
+        var textareaHtml = GetTextareaHtml(hasError, propertyName);
 
-        // Generate the GOV.UK-compliant <textarea> via helper method
-        var textareaHtml = GetTextareaHtml(hasFieldError);
-
-        // Compose the final output: label, error message(s), and textarea field
-        output.Content.SetHtmlContent(labelHtml + fieldErrorsHtml + textareaHtml);
+        output.Content.SetHtmlContent(labelHtml + hintHtml + errorHtml + textareaHtml);
     }
 }

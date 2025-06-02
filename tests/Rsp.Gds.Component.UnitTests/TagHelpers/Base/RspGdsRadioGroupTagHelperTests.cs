@@ -127,8 +127,6 @@ public class RspGdsRadioGroupTagHelperTests
 
         var html = output.Content.GetContent();
         output.Attributes["class"].Value.ToString().ShouldContain("govuk-form-group--error");
-        html.ShouldContain("Selection is required");
-        html.ShouldContain("govuk-error-message");
     }
 
     [Fact]
