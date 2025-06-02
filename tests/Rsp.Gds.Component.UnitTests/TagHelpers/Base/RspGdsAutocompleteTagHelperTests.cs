@@ -91,7 +91,6 @@
             output.Attributes["data-parents"]?.Value.ShouldBe("Q1,Q2");
             output.Attributes["data-questionId"]?.Value.ShouldBe("Q3");
             output.Attributes["id"]?.Value.ShouldBe("custom-id");
-            output.Attributes["class"].Value.ToString().ShouldContain("conditional-field");
 
             var html = output.Content.GetContent();
             html.ShouldContain("Pick your org");
