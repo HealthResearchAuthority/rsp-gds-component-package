@@ -186,8 +186,6 @@ public abstract class RspGdsTagHelperBase : TagHelper
 
         if (ConditionalField)
         {
-            classList += " conditional-field";
-
             if (!string.IsNullOrEmpty(ConditionalClass))
             {
                 classList += $" {ConditionalClass}";
