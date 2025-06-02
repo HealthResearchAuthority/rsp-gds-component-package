@@ -1,11 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using System.Text;
-using System.Text.Encodings.Web;
-
-namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
 ///     Renders a GOV.UK-styled radio button group for a model-bound property.
@@ -62,6 +55,14 @@ public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
     [HtmlAttributeName("question-id")]
     public string QuestionId { get; set; }
 
+    /// <summary>
+    ///     Injected view context.
+    /// </summary>
+    [ViewContext]
+    [HtmlAttributeNotBound]
+    public ViewContext ViewContext { get; set; }
+
+    /// <inheritdoc />
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
@@ -69,8 +70,7 @@ public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
 
         SetContainerAttributes(output, propertyName);
 
-        output.Attributes.SetAttribute("id", !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : propertyName);
-
+        // Get the selected value from the model (string or first from list)
         var selectedValue = For.Model switch
         {
             string str => str,
@@ -78,9 +78,36 @@ public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
             _ => For.Model?.ToString()
         };
 
+        // Try to get validation state
+        ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var modelStateEntry);
+        var hasError = modelStateEntry != null && modelStateEntry.Errors.Count > 0;
+
+        // Determine error message
         var errorHtml = BuildErrorHtml(propertyName);
         var hintHtml = BuildHintHtml(fieldId);
 
+        // Compose form group class
+        var formGroupClass = "govuk-form-group"
+                             + (ConditionalField ? " conditional govuk-radios__conditional" : "")
+                             + (hasError ? " govuk-form-group--error" : "");
+
+        // Configure output container
+        output.TagName = "div";
+        output.TagMode = TagMode.StartTagAndEndTag;
+        output.Attributes.SetAttribute("class", formGroupClass);
+        output.Attributes.SetAttribute("id", !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : propertyName);
+
+        if (!string.IsNullOrWhiteSpace(DataParentsAttr))
+        {
+            output.Attributes.SetAttribute("data-parents", DataParentsAttr);
+        }
+
+        if (!string.IsNullOrWhiteSpace(DataQuestionIdAttr))
+        {
+            output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
+        }
+
+        // Parse any hidden properties to render per option
         var hiddenProps = (ItemHiddenProperties ?? "")
             .Split(',')
             .Select(p => p.Trim())
@@ -111,6 +138,7 @@ public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
                 {option.Label}
             </label>";
 
+            // Render hidden inputs if provided
             if (HiddenModel != null && HiddenModel.Count() > index && hiddenProps.Any())
             {
                 var modelItem = HiddenModel.ElementAt(index);
@@ -135,10 +163,12 @@ public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
 
         var radiosHtml = radiosHtmlBuilder.ToString();
 
+        // Determine wrapper class (e.g. inline or standard radio list)
         var radioWrapperClass = !string.IsNullOrWhiteSpace(DivInlineClass)
             ? DivInlineClass
             : "govuk-radios";
 
+        // Build final fieldset HTML
         var fieldsetHtml = $@"
             <govuk-fieldset>
                 <govuk-fieldset-legend class='{LegendClass}'>
