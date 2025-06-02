@@ -66,7 +66,7 @@ public class RspGdsCharacterCountTextareaTagHelper : RspGdsTextareaTagHelper
         }
 
         // Render the textarea input, applying error classes if necessary
-        var textareaHtml = GetTextareaHtml(hasFieldError);
+        var textareaHtml = GetTextareaHtml(hasFieldError, propertyName);
 
         // Render additional word/character count validation error if present
         var wordCountErrorHtml = "";

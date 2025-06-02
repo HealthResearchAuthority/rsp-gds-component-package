@@ -1,164 +1,53 @@
-﻿using Rsp.Gds.Component.ModelStateExtensions;
-
-namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
 ///     Renders a GOV.UK-styled checkbox group with support for validation,
 ///     conditional display, hints, and custom attributes.
 /// </summary>
 [HtmlTargetElement("rsp-gds-checkbox-group", Attributes = ForAttributeName)]
-public class RspGdsCheckboxGroupTagHelper : TagHelper
+public class RspGdsCheckboxGroupTagHelper : RspGdsTagHelperBase
 {
-    private const string ForAttributeName = "asp-for";
-
-    /// <summary>
-    ///     The model expression this checkbox group is bound to.
-    ///     Used to get the selected values and bind input names.
-    /// </summary>
-    [HtmlAttributeName(ForAttributeName)]
-    public ModelExpression For { get; set; }
-
-    /// <summary>
-    ///     The text label displayed above the checkbox group.
-    ///     If not provided, the property name will be used.
-    /// </summary>
-    [HtmlAttributeName("label-text")]
-    public string LabelText { get; set; }
-
     /// <summary>
     ///     The list of string values to be rendered as checkbox options.
     /// </summary>
     [HtmlAttributeName("options")]
     public IEnumerable<string> Options { get; set; }
 
-    /// <summary>
-    ///     The name of the property to use as the checkbox label when rendering a list of complex objects.
-    ///     Each checkbox label will use this property’s value from the bound model item.
-    /// </summary>
     [HtmlAttributeName("item-label-property")]
     public string ItemLabelProperty { get; set; }
 
-    /// <summary>
-    ///     The name of the boolean property that determines whether a checkbox is checked for each complex object.
-    ///     Each object in the bound model should have this property for binding.
-    /// </summary>
     [HtmlAttributeName("item-value-property")]
     public string ItemValueProperty { get; set; }
 
-    /// <summary>
-    ///     A comma-separated list of property names on each complex object that should be rendered as hidden fields.
-    ///     These fields will be preserved during form submissions.
-    /// </summary>
     [HtmlAttributeName("item-hidden-properties")]
     public string ItemHiddenProperties { get; set; }
 
-    /// <summary>
-    ///     An optional CSS class to apply to each checkbox label element.
-    ///     Useful for custom styling or GOV.UK design system extensions.
-    /// </summary>
     [HtmlAttributeName("label-css-class")]
     public string LabelCssClass { get; set; }
-
-    /// <summary>
-    ///     Indicates whether the checkbox group is conditionally shown or toggled based on another form input.
-    ///     Adds a <c>conditional-field</c> CSS class to the form group container.
-    /// </summary>
-    [HtmlAttributeName("conditional-field")]
-    public bool ConditionalField { get; set; } = false;
 
     /// <summary>
     ///     An optional CSS class applied for conditional display logic.
     /// </summary>
     [HtmlAttributeName("conditional-class")]
+
     public string ConditionalClass { get; set; }
 
-    /// <summary>
-    ///     Value for the data-parents attribute used for conditional UI logic.
-    /// </summary>
-    [HtmlAttributeName("dataparents-attr")]
-    public string DataParentsAttr { get; set; }
-
-    /// <summary>
-    ///     Value for the data-questionId attribute used for tracking or logic.
-    /// </summary>
-    [HtmlAttributeName("dataquestionid-attr")]
-    public string DataQuestionIdAttr { get; set; }
-
-    /// <summary>
-    ///     Custom error message to show if the model state has errors.
-    /// </summary>
-    [HtmlAttributeName("validation-message")]
-    public string ValidationMessage { get; set; }
-
-    /// <summary>
-    ///     Optional HTML content to show as a hint below the label.
-    /// </summary>
-    [HtmlAttributeName("hint-html")]
-    public string HintHtml { get; set; }
-
-    /// <summary>
-    ///     Optional override for the HTML id of the wrapper element.
-    /// </summary>
-    [HtmlAttributeName("id")]
-    public string HtmlId { get; set; }
-
-    /// <summary>
-    ///     Optional override for the legend size class. Defaults to 'govuk-fieldset__legend--l'.
-    /// </summary>
     [HtmlAttributeName("legend-class")]
     public string LegendClass { get; set; } = "govuk-fieldset__legend--l";
 
-    /// <summary>
-    ///     The view context from Razor. Automatically bound.
-    /// </summary>
-    [ViewContext]
-    [HtmlAttributeNotBound]
-    public ViewContext ViewContext { get; set; }
-
-    /// <inheritdoc />
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
-
-        // Get validation state for this field
-        ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry);
-        var hasError = entry != null && entry.Errors.Count > 0;
-
-        // Render a validation error message span if applicable
-        var errorHtml = hasError ? entry.GetGovUkErrorHtml(ValidationMessage) : "";
-
-        // Format hint HTML
-        var hintHtml = !string.IsNullOrWhiteSpace(HintHtml)
-            ? $"<div class='govuk-hint'>{HintHtml}</div>"
-            : "";
-
-        // Set up the form-group classes (include error/conditional if necessary)
-        var formGroupClass = "govuk-form-group"
-                             + (ConditionalField ? " conditional-field" : "")
-                             + (hasError ? " govuk-form-group--error" : "");
-
-        // Setup output container
-        output.TagName = "div";
-        output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("class", formGroupClass);
-
         var fieldId = !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : propertyName;
-        output.Attributes.SetAttribute("id", fieldId);
 
+        SetContainerAttributes(output, propertyName);
         if (!string.IsNullOrWhiteSpace(ConditionalClass))
         {
             output.Attributes.SetAttribute("conditional-class", ConditionalClass);
         }
 
-        if (!string.IsNullOrWhiteSpace(DataParentsAttr))
-        {
-            output.Attributes.SetAttribute("data-parents", DataParentsAttr);
-        }
-
-        if (!string.IsNullOrWhiteSpace(DataQuestionIdAttr))
-        {
-            output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
-        }
+        var errorHtml = BuildErrorHtml(propertyName);
+        var hintHtml = BuildHintHtml(fieldId);
         var checkboxesHtml = new List<string>();
 
         // Case 1: Simple string list binding
@@ -208,7 +97,6 @@ public class RspGdsCheckboxGroupTagHelper : TagHelper
                     $"<label class='govuk-label govuk-checkboxes__label {LabelCssClass}' for='{checkboxId}'>{label}</label>"
                 };
 
-                // Add hidden fields to preserve extra values on postback
                 foreach (var hiddenProp in hiddenProps)
                 {
                     var prop = type.GetProperty(hiddenProp);
@@ -225,7 +113,6 @@ public class RspGdsCheckboxGroupTagHelper : TagHelper
             }
         }
 
-        // Render the fieldset with legend, hint, error, and all checkboxes
         output.Content.SetHtmlContent($@"
 <govuk-fieldset>
     <govuk-fieldset-legend class='{LegendClass}'>

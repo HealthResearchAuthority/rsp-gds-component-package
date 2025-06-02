@@ -1,5 +1,9 @@
-﻿using Castle.Components.DictionaryAdapter.Xml;
-using Rsp.Gds.Component.ModelStateExtensions;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+using System.Text;
+using System.Text.Encodings.Web;
 
 namespace Rsp.Gds.Component.TagHelpers.Base;
 
@@ -8,46 +12,13 @@ namespace Rsp.Gds.Component.TagHelpers.Base;
 ///     Supports label text, dynamic options, conditional visibility, validation, hints, and more.
 /// </summary>
 [HtmlTargetElement("rsp-gds-radio-group", Attributes = ForAttributeName)]
-public class RspGdsRadioGroupTagHelper : TagHelper
+public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
 {
-    private const string ForAttributeName = "asp-for";
-
-    /// <summary>
-    ///     The model expression this radio group is bound to.
-    ///     Used to generate name, value and validation bindings.
-    /// </summary>
-    [HtmlAttributeName(ForAttributeName)]
-    public ModelExpression For { get; set; }
-
-    /// <summary>
-    ///     Text to display as the group label above the radio options.
-    /// </summary>
-    [HtmlAttributeName("label-text")]
-    public string LabelText { get; set; }
-
     /// <summary>
     ///     The radio options to render.
     /// </summary>
     [HtmlAttributeName("options")]
     public IEnumerable<GdsOption> Options { get; set; }
-
-    /// <summary>
-    ///     Adds a conditional field class for toggling visibility via JS.
-    /// </summary>
-    [HtmlAttributeName("conditional-field")]
-    public bool ConditionalField { get; set; } = false;
-
-    /// <summary>
-    ///     Optional HTML hint displayed below the label.
-    /// </summary>
-    [HtmlAttributeName("hint-html")]
-    public string HintHtml { get; set; }
-
-    /// <summary>
-    ///     Custom validation message. Defaults to the first model error.
-    /// </summary>
-    [HtmlAttributeName("validation-message")]
-    public string ValidationMessage { get; set; }
 
     /// <summary>
     ///     CSS class for the legend element (e.g. govuk-fieldset__legend--l).
@@ -60,36 +31,6 @@ public class RspGdsRadioGroupTagHelper : TagHelper
     /// </summary>
     [HtmlAttributeName("label-css-class")]
     public string LabelCssClass { get; set; }
-
-    /// <summary>
-    ///     Additional CSS class applied to the container when conditional logic is used.
-    /// </summary>
-    [HtmlAttributeName("conditional-class")]
-    public string ConditionalClass { get; set; }
-
-    /// <summary>
-    ///     Sets the data-parents attribute on the container for client-side logic.
-    /// </summary>
-    [HtmlAttributeName("dataparents-attr")]
-    public string DataParentsAttr { get; set; }
-
-    /// <summary>
-    ///     Sets the data-questionId attribute on the container.
-    /// </summary>
-    [HtmlAttributeName("dataquestionid-attr")]
-    public string DataQuestionIdAttr { get; set; }
-
-    /// <summary>
-    ///     Used to generate unique IDs per radio item (appended to option value).
-    /// </summary>
-    [HtmlAttributeName("question-id")]
-    public string QuestionId { get; set; }
-
-    /// <summary>
-    ///     HTML ID override for the form group container.
-    /// </summary>
-    [HtmlAttributeName("id")]
-    public string HtmlId { get; set; }
 
     /// <summary>
     ///     Optional override class for the radio wrapper div (e.g. govuk-radios--inline).
@@ -116,18 +57,18 @@ public class RspGdsRadioGroupTagHelper : TagHelper
     public IEnumerable<object> HiddenModel { get; set; }
 
     /// <summary>
-    ///     Injected view context.
+    ///     Used to generate unique IDs per radio item (appended to option value).
     /// </summary>
-    [ViewContext]
-    [HtmlAttributeNotBound]
-    public ViewContext ViewContext { get; set; }
+    [HtmlAttributeName("question-id")]
+    public string QuestionId { get; set; }
 
-    /// <inheritdoc />
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
+        var fieldId = !string.IsNullOrEmpty(FieldId) ? FieldId : propertyName;
 
-        // Get the selected value from the model (string or first from list)
+        SetContainerAttributes(output, propertyName);
+
         var selectedValue = For.Model switch
         {
             string str => str,
@@ -135,35 +76,9 @@ public class RspGdsRadioGroupTagHelper : TagHelper
             _ => For.Model?.ToString()
         };
 
-        // Check for validation errors
-        ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry);
-        var hasError = entry != null && entry.Errors.Count > 0;
+        var errorHtml = BuildErrorHtml(propertyName);
+        var hintHtml = BuildHintHtml(fieldId);
 
-        // Render a validation error message span if applicable
-        var errorHtml = hasError ? entry.GetGovUkErrorHtml(ValidationMessage) : "";
-
-        var hintHtml = !string.IsNullOrWhiteSpace(HintHtml)
-            ? $"<div class='govuk-hint'>{HintHtml}</div>"
-            : "";
-
-        // Compose form group class
-        var formGroupClass = "govuk-form-group"
-                             + (ConditionalField ? " conditional govuk-radios__conditional" : "")
-                             + (hasError ? " govuk-form-group--error" : "");
-
-        // Configure output container
-        output.TagName = "div";
-        output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("class", formGroupClass);
-        output.Attributes.SetAttribute("id", !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : propertyName);
-
-        if (!string.IsNullOrWhiteSpace(DataParentsAttr))
-            output.Attributes.SetAttribute("data-parents", DataParentsAttr);
-
-        if (!string.IsNullOrWhiteSpace(DataQuestionIdAttr))
-            output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
-
-        // Parse any hidden properties to render per option
         var hiddenProps = (ItemHiddenProperties ?? "")
             .Split(',')
             .Select(p => p.Trim())
@@ -194,7 +109,6 @@ public class RspGdsRadioGroupTagHelper : TagHelper
                 {option.Label}
             </label>";
 
-            // Render hidden inputs if provided
             if (HiddenModel != null && HiddenModel.Count() > index && hiddenProps.Any())
             {
                 var modelItem = HiddenModel.ElementAt(index);
@@ -219,12 +133,10 @@ public class RspGdsRadioGroupTagHelper : TagHelper
 
         var radiosHtml = radiosHtmlBuilder.ToString();
 
-        // Determine wrapper class (e.g. inline or standard radio list)
         var radioWrapperClass = !string.IsNullOrWhiteSpace(DivInlineClass)
             ? DivInlineClass
             : "govuk-radios";
 
-        // Build final fieldset HTML
         var fieldsetHtml = $@"
             <govuk-fieldset>
                 <govuk-fieldset-legend class='{LegendClass}'>
