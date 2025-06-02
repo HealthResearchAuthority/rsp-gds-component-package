@@ -1,4 +1,5 @@
 ﻿using Castle.Components.DictionaryAdapter.Xml;
+using Rsp.Gds.Component.ModelStateExtensions;
 
 namespace Rsp.Gds.Component.TagHelpers.Base;
 
@@ -139,24 +140,7 @@ public class RspGdsRadioGroupTagHelper : TagHelper
         var hasError = entry != null && entry.Errors.Count > 0;
 
         // Render a validation error message span if applicable
-        string errorMessage = null;
-
-        if (!string.IsNullOrWhiteSpace(ValidationMessage))
-        {
-            errorMessage = HtmlEncoder.Default.Encode(ValidationMessage);
-        }
-        else if (entry is { Errors.Count: > 0 })
-        {
-            var allErrors = entry.Errors
-                .Select(e => HtmlEncoder.Default.Encode(e.ErrorMessage))
-                .Where(e => !string.IsNullOrWhiteSpace(e));
-            errorMessage = string.Join("<br/>", allErrors);
-        }
-
-        var errorHtml = hasError && !string.IsNullOrWhiteSpace(errorMessage)
-            ? $"<span class='govuk-error-message'>{errorMessage}</span>"
-            : "";
-
+        var errorHtml = hasError ? entry.GetGovUkErrorHtml(ValidationMessage) : "";
 
         var hintHtml = !string.IsNullOrWhiteSpace(HintHtml)
             ? $"<div class='govuk-hint'>{HintHtml}</div>"

@@ -1,4 +1,6 @@
-﻿namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿using Rsp.Gds.Component.ModelStateExtensions;
+
+namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
 ///     Renders a GOV.UK-styled single input field, with support for validation messages,
@@ -241,24 +243,7 @@ public class RspGdsInputTagHelper : TagHelper
             : string.Empty;
 
         // Render a validation error message span if applicable
-        string errorMessage = null;
-
-        if (!string.IsNullOrWhiteSpace(ValidationMessage))
-        {
-            errorMessage = HtmlEncoder.Default.Encode(ValidationMessage);
-        }
-        else if (entry is { Errors.Count: > 0 })
-        {
-            var allErrors = entry.Errors
-                .Select(e => HtmlEncoder.Default.Encode(e.ErrorMessage))
-                .Where(e => !string.IsNullOrWhiteSpace(e));
-            errorMessage = string.Join("<br/>", allErrors);
-        }
-
-        var errorHtml = hasError && !string.IsNullOrWhiteSpace(errorMessage)
-            ? $"<span class='govuk-error-message'>{errorMessage}</span>"
-            : "";
-
+        var errorHtml = hasError ? entry.GetGovUkErrorHtml(ValidationMessage) : "";
 
         // Build input field
         var inputHtml = $@"

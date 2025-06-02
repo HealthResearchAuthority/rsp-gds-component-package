@@ -1,4 +1,6 @@
-﻿namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿using Rsp.Gds.Component.ModelStateExtensions;
+
+namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
 ///     Renders a GOV.UK-styled checkbox group with support for validation,
@@ -122,25 +124,9 @@ public class RspGdsCheckboxGroupTagHelper : TagHelper
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry);
         var hasError = entry != null && entry.Errors.Count > 0;
 
-        // Determine the error message
         // Render a validation error message span if applicable
-        string errorMessage = null;
+        var errorHtml = hasError ? entry.GetGovUkErrorHtml(ValidationMessage) : "";
 
-        if (!string.IsNullOrWhiteSpace(ValidationMessage))
-        {
-            errorMessage = HtmlEncoder.Default.Encode(ValidationMessage);
-        }
-        else if (entry is { Errors.Count: > 0 })
-        {
-            var allErrors = entry.Errors
-                .Select(e => HtmlEncoder.Default.Encode(e.ErrorMessage))
-                .Where(e => !string.IsNullOrWhiteSpace(e));
-            errorMessage = string.Join("<br/>", allErrors);
-        }
-
-        var errorHtml = hasError && !string.IsNullOrWhiteSpace(errorMessage)
-            ? $"<span class='govuk-error-message'>{errorMessage}</span>"
-            : "";
         // Format hint HTML
         var hintHtml = !string.IsNullOrWhiteSpace(HintHtml)
             ? $"<div class='govuk-hint'>{HintHtml}</div>"
