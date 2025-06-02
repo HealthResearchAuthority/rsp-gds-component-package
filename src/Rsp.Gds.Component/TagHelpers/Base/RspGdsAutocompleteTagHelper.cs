@@ -108,8 +108,8 @@ public class RspGdsAutocompleteTagHelper : TagHelper
         var containerId = fieldId + "_autocomplete_container";
         var value = For.Model?.ToString() ?? "";
 
-        ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var modelState);
-        var hasError = modelState != null && modelState.Errors.Any();
+        ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry);
+        var hasError = entry != null && entry.Errors.Count > 0;
 
         var formGroupClass = "govuk-form-group";
         if (ConditionalField)
@@ -157,9 +157,24 @@ public class RspGdsAutocompleteTagHelper : TagHelper
             ? $"<div id='{labelDescribedBy}' class='govuk-hint'>{HintHtml}</div>"
             : string.Empty;
 
-        var errorHtml = hasError
-            ? $"<span class='govuk-error-message'>{HtmlEncoder.Default.Encode(ValidationMessage ?? modelState.Errors[0].ErrorMessage)}</span>"
-            : string.Empty;
+        // Render a validation error message span if applicable
+        string errorMessage = null;
+
+        if (!string.IsNullOrWhiteSpace(ValidationMessage))
+        {
+            errorMessage = HtmlEncoder.Default.Encode(ValidationMessage);
+        }
+        else if (entry is { Errors.Count: > 0 })
+        {
+            var allErrors = entry.Errors
+                .Select(e => HtmlEncoder.Default.Encode(e.ErrorMessage))
+                .Where(e => !string.IsNullOrWhiteSpace(e));
+            errorMessage = string.Join("<br/>", allErrors);
+        }
+
+        var errorHtml = hasError && !string.IsNullOrWhiteSpace(errorMessage)
+            ? $"<span class='govuk-error-message'>{errorMessage}</span>"
+            : "";
 
         var hiddenInputHtml = $@"
 <input id='{hiddenInputId}'

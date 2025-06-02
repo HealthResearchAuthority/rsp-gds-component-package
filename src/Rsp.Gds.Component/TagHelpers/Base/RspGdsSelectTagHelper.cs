@@ -1,4 +1,7 @@
-﻿namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿using Castle.Components.DictionaryAdapter.Xml;
+using Microsoft.AspNetCore.Components.Forms;
+
+namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
 ///     Renders a GOV.UK-styled
@@ -55,6 +58,12 @@ public class RspGdsSelectTagHelper : TagHelper
     public bool ConditionalField { get; set; } = false;
 
     /// <summary>
+    ///     Custom validation message. Defaults to the first model error.
+    /// </summary>
+    [HtmlAttributeName("validation-message")]
+    public string ValidationMessage { get; set; }
+
+    /// <summary>
     ///     Provides access to the current view context, including model state for validation.
     /// </summary>
     [ViewContext]
@@ -68,9 +77,9 @@ public class RspGdsSelectTagHelper : TagHelper
         // Get the selected value from the model (used to mark <option> as selected)
         var selectedValue = For.Model?.ToString();
 
-        // Retrieve model state to determine if this field has validation errors
-        ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var modelStateEntry);
-        var hasError = modelStateEntry?.Errors?.Count > 0;
+        // Try to get the model state for validation (using custom error key if provided)
+        ViewContext.ViewData.ModelState.TryGetValue( propertyName, out var entry);
+        var hasError = entry != null && entry.Errors.Count > 0;
 
         // Build the CSS class string for the outer form group container
         var formGroupClass = "govuk-form-group"
@@ -88,9 +97,23 @@ public class RspGdsSelectTagHelper : TagHelper
                 {LabelText ?? propertyName}
             </label>";
 
-        // Render validation message if an error is present
-        var errorHtml = hasError
-            ? $"<span class='govuk-error-message'>{modelStateEntry.Errors[0].ErrorMessage}</span>"
+        // Render a validation error message span if applicable
+        string errorMessage = null;
+
+        if (!string.IsNullOrWhiteSpace(ValidationMessage))
+        {
+            errorMessage = HtmlEncoder.Default.Encode(ValidationMessage);
+        }
+        else if (entry is { Errors.Count: > 0 })
+        {
+            var allErrors = entry.Errors
+                .Select(e => HtmlEncoder.Default.Encode(e.ErrorMessage))
+                .Where(e => !string.IsNullOrWhiteSpace(e));
+            errorMessage = string.Join("<br/>", allErrors);
+        }
+
+        var errorHtml = hasError && !string.IsNullOrWhiteSpace(errorMessage)
+            ? $"<span class='govuk-error-message'>{errorMessage}</span>"
             : "";
 
         // Optionally add a default placeholder option (e.g., "Please select...")

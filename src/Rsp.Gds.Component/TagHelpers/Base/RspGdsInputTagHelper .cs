@@ -245,16 +245,20 @@ public class RspGdsInputTagHelper : TagHelper
 
         if (!string.IsNullOrWhiteSpace(ValidationMessage))
         {
-            errorMessage = ValidationMessage;
+            errorMessage = HtmlEncoder.Default.Encode(ValidationMessage);
         }
         else if (entry is { Errors.Count: > 0 })
         {
-            errorMessage = entry.Errors[0].ErrorMessage;
+            var allErrors = entry.Errors
+                .Select(e => HtmlEncoder.Default.Encode(e.ErrorMessage))
+                .Where(e => !string.IsNullOrWhiteSpace(e));
+            errorMessage = string.Join("<br/>", allErrors);
         }
 
         var errorHtml = hasError && !string.IsNullOrWhiteSpace(errorMessage)
-            ? $"<span class='govuk-error-message'>{HtmlEncoder.Default.Encode(errorMessage)}</span>"
+            ? $"<span class='govuk-error-message'>{errorMessage}</span>"
             : "";
+
 
         // Build input field
         var inputHtml = $@"

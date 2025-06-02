@@ -1,4 +1,6 @@
-﻿namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿using Castle.Components.DictionaryAdapter.Xml;
+
+namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
 ///     Renders a GOV.UK-styled radio button group for a model-bound property.
@@ -132,19 +134,29 @@ public class RspGdsRadioGroupTagHelper : TagHelper
             _ => For.Model?.ToString()
         };
 
-        // Try to get validation state
-        ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var modelStateEntry);
-        var hasError = modelStateEntry != null && modelStateEntry.Errors.Count > 0;
+        // Check for validation errors
+        ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry);
+        var hasError = entry != null && entry.Errors.Count > 0;
 
-        // Determine error message
-        var errorText = !string.IsNullOrEmpty(ValidationMessage)
-            ? ValidationMessage
-            : modelStateEntry?.Errors.FirstOrDefault()?.ErrorMessage;
+        // Render a validation error message span if applicable
+        string errorMessage = null;
 
-        // Create error and hint HTML if applicable
-        var errorHtml = hasError && !string.IsNullOrWhiteSpace(errorText)
-            ? $"<span class='govuk-error-message'>{HtmlEncoder.Default.Encode(errorText)}</span>"
+        if (!string.IsNullOrWhiteSpace(ValidationMessage))
+        {
+            errorMessage = HtmlEncoder.Default.Encode(ValidationMessage);
+        }
+        else if (entry is { Errors.Count: > 0 })
+        {
+            var allErrors = entry.Errors
+                .Select(e => HtmlEncoder.Default.Encode(e.ErrorMessage))
+                .Where(e => !string.IsNullOrWhiteSpace(e));
+            errorMessage = string.Join("<br/>", allErrors);
+        }
+
+        var errorHtml = hasError && !string.IsNullOrWhiteSpace(errorMessage)
+            ? $"<span class='govuk-error-message'>{errorMessage}</span>"
             : "";
+
 
         var hintHtml = !string.IsNullOrWhiteSpace(HintHtml)
             ? $"<div class='govuk-hint'>{HintHtml}</div>"

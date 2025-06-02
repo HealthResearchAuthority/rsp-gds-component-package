@@ -1,4 +1,6 @@
-﻿namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿using Microsoft.AspNetCore.Components.Forms;
+
+namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
 ///     Renders a GOV.UK-styled
@@ -72,6 +74,12 @@ public class RspGdsTextareaTagHelper : TagHelper
     public IDictionary<string, string> AdditionalAttributes { get; set; } = new Dictionary<string, string>();
 
     /// <summary>
+    ///     Custom validation message. Defaults to the first model error.
+    /// </summary>
+    [HtmlAttributeName("validation-message")]
+    public string ValidationMessage { get; set; }
+
+    /// <summary>
     ///     Provides access to the current view context, including ModelState for validation.
     /// </summary>
     [ViewContext]
@@ -83,7 +91,7 @@ public class RspGdsTextareaTagHelper : TagHelper
     /// </summary>
     /// <param name="hasFieldError">Whether a validation error is present for this field.</param>
     /// <returns>Raw HTML string for the textarea element.</returns>
-    protected string GetTextareaHtml(bool hasFieldError)
+    protected string GetTextareaHtml(bool hasError)
     {
         var propertyName = For.Name;
         var value = For.Model?.ToString() ?? "";
@@ -110,7 +118,7 @@ public class RspGdsTextareaTagHelper : TagHelper
         var attrHtml = string.Join(" ", extraAttributes.Select(kvp => $"{kvp.Key}='{kvp.Value}'"));
 
         return $@"
-                <textarea class='govuk-textarea {WidthClass} {(hasFieldError ? "govuk-textarea--error" : "")}'
+                <textarea class='govuk-textarea {WidthClass} {(hasError ? "govuk-textarea--error" : "")}'
                           id='{propertyName}'
                           name='{propertyName}'
                           {attrHtml}>{value}</textarea>";
@@ -125,12 +133,12 @@ public class RspGdsTextareaTagHelper : TagHelper
 
         // Retrieve model state for this field to check for validation errors
         ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var entry);
-        var hasFieldError = entry != null && entry.Errors.Count > 0;
+        var hasError = entry != null && entry.Errors.Count > 0;
 
         // Build the form-group class including conditional and error styles if applicable
         var formGroupClass = "govuk-form-group"
                              + (ConditionalField ? " conditional-field" : "")
-                             + (hasFieldError ? " govuk-form-group--error" : "");
+                             + (hasError ? " govuk-form-group--error" : "");
 
         // Set the outer <div> attributes
         output.TagName = "div";
@@ -142,21 +150,29 @@ public class RspGdsTextareaTagHelper : TagHelper
             <label class='govuk-label govuk-label--s' for='{propertyName}'>
                 {LabelText ?? propertyName}
             </label>";
+        // Render a validation error message span if applicable
+        string errorMessage = null;
 
-        // Append any field-level validation errors
-        var fieldErrorsHtml = "";
-        if (hasFieldError)
+        if (!string.IsNullOrWhiteSpace(ValidationMessage))
         {
-            foreach (var error in entry.Errors)
-            {
-                fieldErrorsHtml += $"<span class='govuk-error-message'>{error.ErrorMessage}</span>";
-            }
+            errorMessage = HtmlEncoder.Default.Encode(ValidationMessage);
+        }
+        else if (entry is { Errors.Count: > 0 })
+        {
+            var allErrors = entry.Errors
+                .Select(e => HtmlEncoder.Default.Encode(e.ErrorMessage))
+                .Where(e => !string.IsNullOrWhiteSpace(e));
+            errorMessage = string.Join("<br/>", allErrors);
         }
 
+        var errorHtml = hasError && !string.IsNullOrWhiteSpace(errorMessage)
+            ? $"<span class='govuk-error-message'>{errorMessage}</span>"
+            : "";
+
         // Generate the GOV.UK-compliant <textarea> via helper method
-        var textareaHtml = GetTextareaHtml(hasFieldError);
+        var textareaHtml = GetTextareaHtml(hasError);
 
         // Compose the final output: label, error message(s), and textarea field
-        output.Content.SetHtmlContent(labelHtml + fieldErrorsHtml + textareaHtml);
+        output.Content.SetHtmlContent(labelHtml + errorHtml + textareaHtml);
     }
 }
