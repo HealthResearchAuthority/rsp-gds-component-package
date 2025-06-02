@@ -69,6 +69,8 @@ public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
 
         SetContainerAttributes(output, propertyName);
 
+        output.Attributes.SetAttribute("id", !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : propertyName);
+
         var selectedValue = For.Model switch
         {
             string str => str,
