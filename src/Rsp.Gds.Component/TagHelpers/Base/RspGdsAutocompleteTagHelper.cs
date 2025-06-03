@@ -34,19 +34,27 @@ public class RspGdsAutocompleteTagHelper : RspGdsTagHelperBase
         var hintHtml = BuildHintHtml(fieldId);
         var errorHtml = BuildErrorHtml(propertyName);
 
+        // Safely show special characters by only escaping quotes for attribute contexts
+        var safeInputValue = value.Replace("\"", "&quot;");
+
+        // Escape JS value for single-quoted string
+        var jsEscapedValue = value
+            .Replace("\\", "\\\\")
+            .Replace("'", "\\'");
+
         // This input will be shown if JavaScript is disabled (by default) and hidden when JS runs
         var hiddenInputHtml = $@"
 <input id='{hiddenInputId}'
        name='{propertyName}'
        type='text'
        class='govuk-input {WidthClass}'
-       value='{HtmlEncoder.Default.Encode(value)}' />";
+       value=""{safeInputValue}"" />";
 
         var containerHtml = $"<div id='{containerId}'></div>";
 
         var initScript = $@"<script>
 document.addEventListener('DOMContentLoaded', function () {{
-    initAutocomplete('{autoInputId}', '{hiddenInputId}', '{HtmlEncoder.Default.Encode(value)}', '{ApiUrl}', '{containerId}');
+    initAutocomplete('{autoInputId}', '{hiddenInputId}', '{jsEscapedValue}', '{ApiUrl}', '{containerId}');
 }});
 </script>";
 
