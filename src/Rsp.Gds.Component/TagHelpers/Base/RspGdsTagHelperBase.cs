@@ -189,9 +189,14 @@ public abstract class RspGdsTagHelperBase : TagHelper
     {
         var classList = "govuk-form-group";
 
-        if (ConditionalField && !string.IsNullOrEmpty(ConditionalClass))
+        if (ConditionalField)
         {
-            classList += $" {ConditionalClass}";
+            classList += " conditional-field";
+
+            if ( !string.IsNullOrEmpty(ConditionalClass))
+            {
+                classList += $" {ConditionalClass}";
+            }
         }
 
         if (HasError(propertyName))
