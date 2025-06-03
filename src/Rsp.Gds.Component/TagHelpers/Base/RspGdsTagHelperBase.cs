@@ -173,7 +173,6 @@ public abstract class RspGdsTagHelperBase : TagHelper
         var encodedLabel = HtmlEncoder.Default.Encode(LabelText ?? propertyName);
 
         return $@"
-<label class='govuk-label js-hidden' for='{hiddenInputId}' aria-describedby='{describedById}'>{encodedLabel}</label>
 <label class='govuk-label' for='{autoInputId}' aria-describedby='{describedById}'>{encodedLabel}</label>";
     }
 

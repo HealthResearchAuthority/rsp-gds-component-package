@@ -10,11 +10,14 @@ public class RspGdsAutocompleteTagHelper : RspGdsTagHelperBase
     /// <summary>
     ///     The API endpoint URL used to fetch autocomplete suggestions.
     /// </summary>
-    [HtmlAttributeName("api-url")] public string ApiUrl { get; set; }
+    [HtmlAttributeName("api-url")]
+    public string ApiUrl { get; set; }
+
     /// <summary>
     ///     GOV.UK input width class. Defaults to 'govuk-!-width-three-quarters'.
     /// </summary>
-    [HtmlAttributeName("width-class")] public string WidthClass { get; set; } = "govuk-!-width-three-quarters";
+    [HtmlAttributeName("width-class")]
+    public string WidthClass { get; set; } = "govuk-!-width-three-quarters";
 
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
@@ -31,11 +34,12 @@ public class RspGdsAutocompleteTagHelper : RspGdsTagHelperBase
         var hintHtml = BuildHintHtml(fieldId);
         var errorHtml = BuildErrorHtml(propertyName);
 
+        // This input will be shown if JavaScript is disabled (by default) and hidden when JS runs
         var hiddenInputHtml = $@"
 <input id='{hiddenInputId}'
        name='{propertyName}'
        type='text'
-       class='govuk-input {WidthClass} js-hidden'
+       class='govuk-input {WidthClass}'
        value='{HtmlEncoder.Default.Encode(value)}' />";
 
         var containerHtml = $"<div id='{containerId}'></div>";
