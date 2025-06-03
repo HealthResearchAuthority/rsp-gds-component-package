@@ -1,4 +1,10 @@
-﻿namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+using System.Text.Encodings.Web;
+
+namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
 ///     Base class for GOV.UK-styled TagHelpers.
@@ -8,107 +14,54 @@ public abstract class RspGdsTagHelperBase : TagHelper
 {
     protected const string ForAttributeName = "asp-for";
 
-    /// <summary>
-    ///     The model expression this input is bound to.
-    /// </summary>
     [HtmlAttributeName(ForAttributeName)]
     public ModelExpression For { get; set; }
 
-    /// <summary>
-    ///     The label text to render.
-    /// </summary>
     [HtmlAttributeName("label-text")]
     public string LabelText { get; set; }
 
-    /// <summary>
-    ///     Optional HTML content rendered below the label.
-    /// </summary>
     [HtmlAttributeName("hint-html")]
     public string HintHtml { get; set; }
 
-    /// <summary>
-    ///     Optional ID to assign to the hint container.
-    /// </summary>
     [HtmlAttributeName("hint-id")]
     public string HintId { get; set; }
 
-    /// <summary>
-    ///     Optional aria-describedby ID used in the label.
-    /// </summary>
     [HtmlAttributeName("label-aria-describedby")]
     public string LabelAriaDescribedBy { get; set; }
 
-    /// <summary>
-    ///     Optional override message for model validation errors.
-    /// </summary>
     [HtmlAttributeName("validation-message")]
     public string ValidationMessage { get; set; }
 
-    /// <summary>
-    ///     Optional override key for model state validation lookup.
-    /// </summary>
     [HtmlAttributeName("error-key")]
     public string ErrorKey { get; set; }
 
-    /// <summary>
-    ///     Optional override for the input field ID.
-    /// </summary>
     [HtmlAttributeName("field-id")]
     public string FieldId { get; set; }
 
-    /// <summary>
-    ///     Optional ID for the outer container.
-    /// </summary>
     [HtmlAttributeName("id")]
     public string HtmlId { get; set; }
 
-    /// <summary>
-    ///     If true, applies conditional CSS class for field visibility control.
-    /// </summary>
     [HtmlAttributeName("conditional-field")]
     public bool ConditionalField { get; set; }
 
-    /// <summary>
-    ///     Optional additional CSS class for conditionally rendered fields.
-    /// </summary>
     [HtmlAttributeName("conditional-class")]
     public string ConditionalClass { get; set; }
 
-    /// <summary>
-    ///     Used to set data-parents attribute for conditional logic.
-    /// </summary>
     [HtmlAttributeName("dataparents-attr")]
     public string DataParentsAttr { get; set; }
 
-    /// <summary>
-    ///     Used to set data-questionId attribute for conditional logic.
-    /// </summary>
     [HtmlAttributeName("dataquestionid-attr")]
     public string DataQuestionIdAttr { get; set; }
 
-    /// <summary>
-    ///     If true, the field will be rendered readonly.
-    /// </summary>
     [HtmlAttributeName("readonly")]
     public bool Readonly { get; set; } = false;
 
-    /// <summary>
-    ///     If true, the field will be rendered disabled.
-    /// </summary>
     [HtmlAttributeName("disabled")]
     public bool Disabled { get; set; } = false;
 
-    /// <summary>
-    ///     Additional HTML attributes to include in the input element.
-    ///     These override default values if keys match.
-    /// </summary>
     [HtmlAttributeName("additional-attributes")]
     public IDictionary<string, string> AdditionalAttributes { get; set; } = new Dictionary<string, string>();
 
-
-    /// <summary>
-    ///     ViewContext for model state and validation.
-    /// </summary>
     [ViewContext]
     [HtmlAttributeNotBound]
     public ViewContext ViewContext { get; set; }
@@ -119,7 +72,13 @@ public abstract class RspGdsTagHelperBase : TagHelper
     protected bool TryGetModelState(string propertyName, out ModelStateEntry entry)
     {
         entry = null;
-        return ViewContext?.ViewData?.ModelState?.TryGetValue(ErrorKey ?? propertyName, out entry) == true;
+
+        var keyToUse = !string.IsNullOrWhiteSpace(ErrorKey) &&
+                       ViewContext?.ViewData?.ModelState?.ContainsKey(ErrorKey) == true
+            ? ErrorKey
+            : propertyName;
+
+        return ViewContext?.ViewData?.ModelState?.TryGetValue(keyToUse, out entry) == true;
     }
 
     /// <summary>
@@ -127,7 +86,7 @@ public abstract class RspGdsTagHelperBase : TagHelper
     /// </summary>
     protected string BuildErrorHtml(string propertyName)
     {
-        if (TryGetModelState(propertyName, out var entry))
+        if (TryGetModelState(propertyName, out var entry) && entry.Errors.Count > 0)
         {
             return entry.GetGovUkErrorHtml(ValidationMessage);
         }
@@ -183,12 +142,9 @@ public abstract class RspGdsTagHelperBase : TagHelper
     {
         var classList = "govuk-form-group";
 
-        if (ConditionalField)
+        if (ConditionalField && !string.IsNullOrEmpty(ConditionalClass))
         {
-            if (!string.IsNullOrEmpty(ConditionalClass))
-            {
-                classList += $" {ConditionalClass}";
-            }
+            classList += $" {ConditionalClass}";
         }
 
         if (HasError(propertyName))

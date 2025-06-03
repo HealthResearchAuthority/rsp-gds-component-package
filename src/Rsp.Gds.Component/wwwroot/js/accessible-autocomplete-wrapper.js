@@ -32,8 +32,10 @@ function initAutocomplete(autoCompleteInputId, inputIdForSubmission, defaultValu
             // If fewer than 3 characters, hide menu and show guidance
             if (query.length < 3) {
                 populateResults([]); // No suggestions to populate
-                $('.autocomplete__menu').attr('data-before-suggestions', ''); // Clear message before suggestions.
-                $('.autocomplete__menu').attr('data-after-suggestions', afterSuggestionsText); // Show message after suggestions.
+                document.querySelectorAll('.autocomplete__menu').forEach(el => {
+                    el.setAttribute('data-before-suggestions', ''); // Clear message before suggestions.
+                    el.setAttribute('data-after-suggestions', afterSuggestionsText); // Show message after suggestions.
+                });
                 return;
             }
 
@@ -56,9 +58,12 @@ function initAutocomplete(autoCompleteInputId, inputIdForSubmission, defaultValu
                     }
 
                     resultsFound = true; // Set flag to indicate that results were found.
-                    $('.autocomplete__menu').attr('data-before-suggestions', beforeSuggestionsText); // Show message before suggestions.
-                    $('.autocomplete__menu').attr('data-after-suggestions', afterSuggestionsText); // Show message after suggestions.
-                    $('#' + inputIdForSubmission).val(''); // Clear the hidden input; only populated when a suggestion is selected.
+                    document.querySelectorAll('.autocomplete__menu').forEach(el => {
+                        el.setAttribute('data-before-suggestions', beforeSuggestionsText); // Show message before suggestions.
+                        el.setAttribute('data-after-suggestions', afterSuggestionsText); // Show message after suggestions.
+                    });
+
+                    document.getElementById(inputIdForSubmission).value = ''; // Clear the hidden input; only populated when a suggestion is selected.
                     populateResults(data); // Populate the suggestion list with the API response.
                 },
                 error: function () {
@@ -76,9 +81,9 @@ function initAutocomplete(autoCompleteInputId, inputIdForSubmission, defaultValu
         onConfirm: function (suggestion) {
             // Handle the selection of a suggestion.
             if (suggestion) {
-                $('#' + inputIdForSubmission).val(suggestion); // Set the hidden input value to the selected suggestion.
+                document.getElementById(inputIdForSubmission).value = suggestion; // Set the hidden input value to the selected suggestion.
             } else {
-                $('#' + inputIdForSubmission).val(''); // Clear the hidden input if no suggestion is selected.
+                document.getElementById(inputIdForSubmission).value = ''; // Clear the hidden input if no suggestion is selected.
             }
         },
 
@@ -110,21 +115,32 @@ function initAutocomplete(autoCompleteInputId, inputIdForSubmission, defaultValu
                 return '';
             }
 
-            $('#' + inputIdForSubmission).val(''); // Clear the hidden input value.
+            document.getElementById(inputIdForSubmission).value = ''; // Clear the hidden input value.
             return noResultsText; // Return the message for no results.
         }
     });
 
-    // if javascript is enabled, hide the original input and label
-    $('#' + inputIdForSubmission).addClass('js-hidden');
-    $('label[for="' + inputIdForSubmission + '"]').hide();
+    // If JavaScript is enabled, hide the original input and its label
+    const hiddenInput = document.getElementById(inputIdForSubmission);
+    if (hiddenInput) {
+        hiddenInput.style.display = 'none';
+    }
+
+    const label = document.querySelector('label[for="' + inputIdForSubmission + '"]');
+    if (label) {
+        label.style.display = 'none';
+    }
+
 
     // Clear hidden field if input is cleared
-    $('#' + autoCompleteInputId).on('input', function () {
-        if (!this.value) {
-            $('#' + inputIdForSubmission).val(''); // Clears the hidden input value.
-            $('.autocomplete__menu').html(''); // Clear the suggestion list.
-            resultsFound = false; // Reset the resultsFound flag.
-        }
-    });
+    const autoInput = document.getElementById(autoCompleteInputId);
+    if (autoInput) {
+        autoInput.addEventListener('input', function () {
+            if (!this.value) {
+                document.getElementById(inputIdForSubmission).value = ''; // Clears the hidden input value.
+                document.querySelectorAll('.autocomplete__menu').forEach(el => el.innerHTML = ''); // Clear the suggestion list.
+                resultsFound = false; // Reset the resultsFound flag.
+            }
+        });
+    }
 }
