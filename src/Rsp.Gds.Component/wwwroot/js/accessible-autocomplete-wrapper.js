@@ -116,25 +116,25 @@ function initAutocomplete(autoCompleteInputId, inputIdForSubmission, defaultValu
     });
 
     // If JavaScript is enabled, hide the original input and its label
-    const hiddenInput = document.getElementById(inputIdForSubmission);
-    if (hiddenInput) {
-        hiddenInput.style.display = 'none';
+    const hiddenInputId = '#' + inputIdForSubmission;
+    const $hiddenInput = $(hiddenInputId);
+    if ($hiddenInput.length) {
+        $hiddenInput.hide();
     }
 
-    const label = document.querySelector('label[for="' + inputIdForSubmission + '"]');
-    if (label) {
-        label.style.display = 'none';
+    const $label = $('label[for="' + inputIdForSubmission + '"]');
+    if ($label.length) {
+        $label.hide();
     }
-
 
     // Clear hidden field if input is cleared
-    const autoInput = document.getElementById(autoCompleteInputId);
-    if (autoInput) {
-        autoInput.addEventListener('input', function () {
-            if (!this.value) {
-                document.getElementById(inputIdForSubmission).value = ''; // Clears the hidden input value.
-                document.querySelectorAll('.autocomplete__menu').forEach(el => el.innerHTML = ''); // Clear the suggestion list.
-                resultsFound = false; // Reset the resultsFound flag.
+    const $autoInput = $('#' + autoCompleteInputId);
+    if ($autoInput.length) {
+        $autoInput.on('input', function () {
+            if (!$(this).val()) {
+                $(hiddenInputId).val(''); // Clears the hidden input value
+                $('.autocomplete__menu').empty(); // Clear the suggestion list
+                resultsFound = false; // Reset the resultsFound flag
             }
         });
     }
