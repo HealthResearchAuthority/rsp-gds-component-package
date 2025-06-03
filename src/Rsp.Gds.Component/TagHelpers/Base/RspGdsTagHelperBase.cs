@@ -119,7 +119,13 @@ public abstract class RspGdsTagHelperBase : TagHelper
     protected bool TryGetModelState(string propertyName, out ModelStateEntry entry)
     {
         entry = null;
-        return ViewContext?.ViewData?.ModelState?.TryGetValue(ErrorKey ?? propertyName, out entry) == true;
+
+        var keyToUse = !string.IsNullOrWhiteSpace(ErrorKey) &&
+                       ViewContext?.ViewData?.ModelState?.ContainsKey(ErrorKey) == true
+            ? ErrorKey
+            : propertyName;
+
+        return ViewContext?.ViewData?.ModelState?.TryGetValue(keyToUse, out entry) == true;
     }
 
     /// <summary>
@@ -127,7 +133,7 @@ public abstract class RspGdsTagHelperBase : TagHelper
     /// </summary>
     protected string BuildErrorHtml(string propertyName)
     {
-        if (TryGetModelState(propertyName, out var entry))
+        if (TryGetModelState(propertyName, out var entry) && entry.Errors.Count > 0)
         {
             return entry.GetGovUkErrorHtml(ValidationMessage);
         }
@@ -173,7 +179,6 @@ public abstract class RspGdsTagHelperBase : TagHelper
         var encodedLabel = HtmlEncoder.Default.Encode(LabelText ?? propertyName);
 
         return $@"
-<label class='govuk-label js-hidden' for='{hiddenInputId}' aria-describedby='{describedById}'>{encodedLabel}</label>
 <label class='govuk-label' for='{autoInputId}' aria-describedby='{describedById}'>{encodedLabel}</label>";
     }
 
@@ -184,12 +189,9 @@ public abstract class RspGdsTagHelperBase : TagHelper
     {
         var classList = "govuk-form-group";
 
-        if (ConditionalField)
+        if (ConditionalField && !string.IsNullOrEmpty(ConditionalClass))
         {
-            if (!string.IsNullOrEmpty(ConditionalClass))
-            {
-                classList += $" {ConditionalClass}";
-            }
+            classList += $" {ConditionalClass}";
         }
 
         if (HasError(propertyName))
