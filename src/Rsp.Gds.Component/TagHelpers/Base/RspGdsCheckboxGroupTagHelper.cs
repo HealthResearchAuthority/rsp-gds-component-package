@@ -112,6 +112,9 @@ public class RspGdsCheckboxGroupTagHelper : RspGdsTagHelperBase
                 index++;
             }
         }
+        output.TagName = "div";
+        output.TagMode = TagMode.StartTagAndEndTag;
+        output.Attributes.SetAttribute("id", !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : propertyName);
 
         output.Content.SetHtmlContent($@"
 <govuk-fieldset>
