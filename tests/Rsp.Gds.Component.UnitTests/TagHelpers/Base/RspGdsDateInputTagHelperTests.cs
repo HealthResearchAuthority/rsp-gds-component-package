@@ -1,15 +1,4 @@
-﻿using HtmlAgilityPack;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using Rsp.Gds.Component.TagHelpers.Base;
-using Shouldly;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Xunit;
-
-namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
+﻿namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
 
 public class RspGdsDateInputTagHelperTests
 {
@@ -72,6 +61,7 @@ public class RspGdsDateInputTagHelperTests
             For = CreateModelExpression("BirthDate", null),
             DayName = "BirthDate.Day",
             MonthName = "BirthDate.Month",
+            IsMonthADropdown = false,
             YearName = "BirthDate.Year",
             LabelText = "Date of birth",
             HintHtml = "For example, 31 3 1980",
