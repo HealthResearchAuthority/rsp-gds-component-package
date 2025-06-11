@@ -60,101 +60,97 @@ public class RspGdsDateInputTagHelper : RspGdsTagHelperBase
 
         SetContainerAttributes(output, propertyName);
 
-        var encodedLabel = HtmlEncoder.Default.Encode(LabelText ?? propertyName);
-        var labelHtml = $@"<label class='govuk-label' for='{propertyName}'>{encodedLabel}</label>";
-
+        var hasError = HasError(propertyName);
+        var labelHtml = $@"<label class='govuk-label' for='{propertyName}'>{HtmlEncoder.Default.Encode(LabelText ?? propertyName)}</label>";
         var hintHtml = BuildHintHtml(fieldId);
         var errorHtml = BuildErrorHtml(propertyName);
-        var hasError = HasError(propertyName);
 
-        var dayInput = $@"
+        var dayInput = BuildDayInput(hasError);
+        var monthInput = IsMonthADropdown ? BuildMonthDropdown(hasError) : BuildMonthInput(hasError);
+        var yearInput = BuildYearInput(hasError);
+
+        var dateGroupHtml = $@"
+            <div class='govuk-date-input' id='{fieldId}_date'>
+                {dayInput}
+                {monthInput}
+                {yearInput}
+            </div>";
+
+        output.Content.SetHtmlContent(labelHtml + hintHtml + errorHtml + dateGroupHtml);
+    }
+
+    private string BuildDayInput(bool hasError)
+    {
+        return $@"
         <div class='govuk-date-input__item'>
             <div class='govuk-form-group'>
                 <label class='govuk-label govuk-date-input__label' for='{DayName}'>Day</label>
                 <input class='govuk-input govuk-date-input__input govuk-input--width-2{(hasError ? " govuk-input--error" : "")}'
-                       id='{DayName}'
-                       name='{DayName}'
-                       type='text'
-                       inputmode='numeric'
+                       id='{DayName}' name='{DayName}' type='text' inputmode='numeric'
                        value='{HtmlEncoder.Default.Encode(DayValue ?? "")}'>
             </div>
         </div>";
+    }
 
-        var monthInput = string.Empty;
-        if (IsMonthADropdown)
+    private string BuildMonthInput(bool hasError)
+    {
+        return $@"
+        <div class='govuk-date-input__item'>
+            <div class='govuk-form-group'>
+                <label class='govuk-label govuk-date-input__label' for='{MonthName}'>Month</label>
+                <input class='govuk-input govuk-date-input__input govuk-input--width-2{(hasError ? " govuk-input--error" : "")}'
+                       id='{MonthName}' name='{MonthName}' type='text' inputmode='numeric'
+                       value='{HtmlEncoder.Default.Encode(MonthValue ?? "")}'>
+            </div>
+        </div>";
+    }
+
+    private string BuildMonthDropdown(bool hasError)
+    {
+        var months = new[]
         {
-            var monthOptions = new StringBuilder();
-            monthOptions.AppendLine("<option value=''>Choose month</option>");
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        };
 
-            var months = new[]
-            {
-                "January", "February", "March", "April", "May", "June",
-                "July", "August", "September", "October", "November", "December"
-            };
+        int? selectedMonth = null;
+        if (!string.IsNullOrWhiteSpace(MonthValue) &&
+            int.TryParse(MonthValue.TrimStart('0'), out var parsed) &&
+            parsed is >= 1 and <= 12)
+        {
+            selectedMonth = parsed;
+        }
 
-            // Normalize incoming MonthValue by parsing to int
-            int? normalizedMonthInt = null;
-            if (!string.IsNullOrWhiteSpace(MonthValue) && int.TryParse(MonthValue.TrimStart('0'), out var parsedMonth) && parsedMonth >= 1 && parsedMonth <= 12)
-            {
-                normalizedMonthInt = parsedMonth;
-            }
+        var monthOptions = new StringBuilder("<option value=''>Choose month</option>");
+        for (var i = 0; i < months.Length; i++)
+        {
+            var monthValue = i + 1;
+            string selected = (selectedMonth == monthValue) ? " selected" : "";
+            monthOptions.AppendLine($"<option value='{monthValue}'{selected}>{months[i]}</option>");
+        }
 
-            // Generate <option> list
-            for (int i = 0; i < months.Length; i++)
-            {
-                int monthValue = i + 1;
-                string selected = (normalizedMonthInt == monthValue) ? " selected" : "";
-                monthOptions.AppendLine($"<option value='{monthValue}'{selected}>{months[i]}</option>");
-            }
-
-            monthInput = $@"
+        return $@"
             <div class='govuk-date-input__item'>
                 <div class='govuk-form-group'>
                     <label class='govuk-label govuk-date-input__label' for='{MonthName}'>Month</label>
                     <select class='govuk-select govuk-date-input__input{(hasError ? " govuk-input--error" : "")}'
-                            id='{MonthName}'
-                            name='{MonthName}'>
+                            id='{MonthName}' name='{MonthName}'>
                         {monthOptions}
                     </select>
                 </div>
             </div>";
-        }
-        else
-        {
-            monthInput = $@"
-            <div class='govuk-date-input__item'>
-                <div class='govuk-form-group'>
-                    <label class='govuk-label govuk-date-input__label' for='{MonthName}'>Month</label>
-                    <input class='govuk-input govuk-date-input__input govuk-input--width-2{(hasError ? " govuk-input--error" : "")}'
-                           id='{MonthName}'
-                           name='{MonthName}'
-                           type='text'
-                           inputmode='numeric'
-                           value='{HtmlEncoder.Default.Encode(MonthValue ?? "")}'>
-                </div>
-            </div>";
-        }
+    }
 
-        var yearInput = $@"
+    private string BuildYearInput(bool hasError)
+    {
+        return $@"
         <div class='govuk-date-input__item'>
             <div class='govuk-form-group'>
                 <label class='govuk-label govuk-date-input__label' for='{YearName}'>Year</label>
                 <input class='govuk-input govuk-date-input__input govuk-input--width-4{(hasError ? " govuk-input--error" : "")}'
-                       id='{YearName}'
-                       name='{YearName}'
-                       type='text'
-                       inputmode='numeric'
+                       id='{YearName}' name='{YearName}' type='text' inputmode='numeric'
                        value='{HtmlEncoder.Default.Encode(YearValue ?? "")}'>
             </div>
         </div>";
-
-        var dateGroupHtml = $@"
-        <div class='govuk-date-input' id='{fieldId}_date'>
-            {dayInput}
-            {monthInput}
-            {yearInput}
-        </div>";
-
-        output.Content.SetHtmlContent(labelHtml + hintHtml + errorHtml + dateGroupHtml);
     }
 }
