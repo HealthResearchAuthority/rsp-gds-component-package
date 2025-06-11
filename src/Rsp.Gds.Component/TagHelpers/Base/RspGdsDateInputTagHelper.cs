@@ -46,6 +46,12 @@ public class RspGdsDateInputTagHelper : RspGdsTagHelperBase
     [HtmlAttributeName("year-value")]
     public string? YearValue { get; set; }
 
+    /// <summary>
+    ///     If true, the month field will be shown as a dropdown instead of an input field. This defaults to true.
+    /// </summary>
+    [HtmlAttributeName("month-as-dropdown")]
+    public bool IsMonthADropdown { get; set; } = true;
+
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
@@ -74,18 +80,60 @@ public class RspGdsDateInputTagHelper : RspGdsTagHelperBase
             </div>
         </div>";
 
-        var monthInput = $@"
-        <div class='govuk-date-input__item'>
-            <div class='govuk-form-group'>
-                <label class='govuk-label govuk-date-input__label' for='{MonthName}'>Month</label>
-                <input class='govuk-input govuk-date-input__input govuk-input--width-2{(hasError ? " govuk-input--error" : "")}'
-                       id='{MonthName}'
-                       name='{MonthName}'
-                       type='text'
-                       inputmode='numeric'
-                       value='{HtmlEncoder.Default.Encode(MonthValue ?? "")}'>
-            </div>
-        </div>";
+        var monthInput = string.Empty;
+        if (IsMonthADropdown)
+        {
+            var monthOptions = new StringBuilder();
+            monthOptions.AppendLine("<option value=''>Choose month</option>");
+
+            var months = new[]
+            {
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            };
+
+            // Normalize incoming MonthValue by parsing to int
+            int? normalizedMonthInt = null;
+            if (!string.IsNullOrWhiteSpace(MonthValue) && int.TryParse(MonthValue.TrimStart('0'), out var parsedMonth) && parsedMonth >= 1 && parsedMonth <= 12)
+            {
+                normalizedMonthInt = parsedMonth;
+            }
+
+            // Generate <option> list
+            for (int i = 0; i < months.Length; i++)
+            {
+                int monthValue = i + 1;
+                string selected = (normalizedMonthInt == monthValue) ? " selected" : "";
+                monthOptions.AppendLine($"<option value='{monthValue}'{selected}>{months[i]}</option>");
+            }
+
+            monthInput = $@"
+            <div class='govuk-date-input__item'>
+                <div class='govuk-form-group'>
+                    <label class='govuk-label govuk-date-input__label' for='{MonthName}'>Month</label>
+                    <select class='govuk-select govuk-date-input__input{(hasError ? " govuk-input--error" : "")}'
+                            id='{MonthName}'
+                            name='{MonthName}'>
+                        {monthOptions}
+                    </select>
+                </div>
+            </div>";
+        }
+        else
+        {
+            monthInput = $@"
+            <div class='govuk-date-input__item'>
+                <div class='govuk-form-group'>
+                    <label class='govuk-label govuk-date-input__label' for='{MonthName}'>Month</label>
+                    <input class='govuk-input govuk-date-input__input govuk-input--width-2{(hasError ? " govuk-input--error" : "")}'
+                           id='{MonthName}'
+                           name='{MonthName}'
+                           type='text'
+                           inputmode='numeric'
+                           value='{HtmlEncoder.Default.Encode(MonthValue ?? "")}'>
+                </div>
+            </div>";
+        }
 
         var yearInput = $@"
         <div class='govuk-date-input__item'>
