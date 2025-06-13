@@ -91,7 +91,7 @@ public class RspGdsInputTagHelper : RspGdsTagHelperBase
         var hintId = !string.IsNullOrEmpty(HintId) ? HintId : propertyName;
 
         var labelHtml = $@"
-    <label class='govuk-label' for='{fieldId}' aria-describedby='{labelAriaDescribedBy}'>
+    <label class='govuk-label govuk-label--s' for='{fieldId}' aria-describedby='{labelAriaDescribedBy}'>
         {LabelText ?? propertyName}
     </label>";
 
