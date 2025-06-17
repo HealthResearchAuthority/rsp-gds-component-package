@@ -154,11 +154,12 @@ public abstract class RspGdsTagHelperBase : TagHelper
     /// </summary>
     protected string BuildHintHtml(string fieldId)
     {
-        var describedById = !string.IsNullOrEmpty(LabelAriaDescribedBy)
-            ? LabelAriaDescribedBy
-            : !string.IsNullOrEmpty(HintId)
-                ? HintId
-                : fieldId + "-hint";
+        string describedById = (LabelAriaDescribedBy, HintId) switch
+        {
+            var (label, _) when !string.IsNullOrEmpty(label) => label, // Use label aria-describedby if provided
+            var (_, hint) when !string.IsNullOrEmpty(hint) => hint, // Use hint ID if provided
+            _ => fieldId + "-hint" // Default to field ID with '-hint' suffix
+        };
 
         return !string.IsNullOrWhiteSpace(HintHtml)
             ? $"<div id='{describedById}' class='govuk-hint'>{HintHtml}</div>"
@@ -168,18 +169,19 @@ public abstract class RspGdsTagHelperBase : TagHelper
     /// <summary>
     ///     Builds the GOV.UK label HTML markup with screen reader and visible versions.
     /// </summary>
-    protected string BuildLabelHtml(string propertyName, string autoInputId, string hiddenInputId, string fieldId)
+    protected string BuildLabelHtml(string propertyName, string autoInputId, string fieldId)
     {
-        var describedById = !string.IsNullOrEmpty(LabelAriaDescribedBy)
-            ? LabelAriaDescribedBy
-            : !string.IsNullOrEmpty(HintId)
-                ? HintId
-                : fieldId + "-hint";
+        string describedById = (LabelAriaDescribedBy, HintId) switch
+        {
+            var (label, _) when !string.IsNullOrEmpty(label) => label, // Use label aria-describedby if provided
+            var (_, hint) when !string.IsNullOrEmpty(hint) => hint, // Use hint ID if provided
+            _ => fieldId + "-hint" // Default to field ID with '-hint' suffix
+        };
 
         var encodedLabel = HtmlEncoder.Default.Encode(LabelText ?? propertyName);
 
         return $@"
-<label class='govuk-label' for='{autoInputId}' aria-describedby='{describedById}'>{encodedLabel}</label>";
+<label class='govuk-label govuk-label--s' for='{autoInputId}' aria-describedby='{describedById}' style='display:none'>{encodedLabel}</label>";
     }
 
     /// <summary>
@@ -193,7 +195,7 @@ public abstract class RspGdsTagHelperBase : TagHelper
         {
             classList += " conditional-field";
 
-            if ( !string.IsNullOrEmpty(ConditionalClass))
+            if (!string.IsNullOrEmpty(ConditionalClass))
             {
                 classList += $" {ConditionalClass}";
             }

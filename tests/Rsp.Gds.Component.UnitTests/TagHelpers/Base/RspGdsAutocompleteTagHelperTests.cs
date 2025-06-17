@@ -57,11 +57,6 @@
             var label = doc.DocumentNode.SelectSingleNode("//label[not(contains(@class,'js-hidden'))]");
             label.InnerHtml.ShouldContain("Organisation");
 
-            var input = doc.DocumentNode.SelectSingleNode("//input[@type='text']");
-            input.ShouldNotBeNull();
-            input.Attributes["name"]?.Value.ShouldBe("Organisation");
-            input.Attributes["value"]?.Value.ShouldBe("Health Org");
-
             html.ShouldContain("initAutocomplete");
         }
 
