@@ -19,6 +19,12 @@ public class RspGdsAutocompleteTagHelper : RspGdsTagHelperBase
     [HtmlAttributeName("width-class")]
     public string WidthClass { get; set; } = "govuk-!-width-three-quarters";
 
+    /// <summary>
+    /// Id of the hidden input field to indicate that autocomplete is enabled.
+    /// </summary>
+    [HtmlAttributeName("auto-complete-enabled-id")]
+    public string AutoCompleteEnabledId { get; set; }
+
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
@@ -30,34 +36,21 @@ public class RspGdsAutocompleteTagHelper : RspGdsTagHelperBase
 
         SetContainerAttributes(output, propertyName);
 
-        var labelHtml = BuildLabelHtml(propertyName, autoInputId, hiddenInputId, fieldId);
+        var labelHtml = BuildLabelHtml(propertyName, autoInputId, fieldId);
         var hintHtml = BuildHintHtml(fieldId);
         var errorHtml = BuildErrorHtml(propertyName);
 
-        // Safely show special characters by only escaping quotes for attribute contexts
-        var safeInputValue = value.Replace("\"", "&quot;");
-
         // Escape JS value for single-quoted string
-        var jsEscapedValue = value
-            .Replace("\\", "\\\\")
-            .Replace("'", "\\'");
-
-        // This input will be shown if JavaScript is disabled (by default) and hidden when JS runs
-        var hiddenInputHtml = $@"
-<input id='{hiddenInputId}'
-       name='{propertyName}'
-       type='text'
-       class='govuk-input {WidthClass}'
-       value=""{safeInputValue}"" />";
+        var jsEscapedValue = value.Replace("\\", "\\\\").Replace("'", "\\'");
 
         var containerHtml = $"<div id='{containerId}'></div>";
 
         var initScript = $@"<script>
 document.addEventListener('DOMContentLoaded', function () {{
-    initAutocomplete('{autoInputId}', '{hiddenInputId}', '{jsEscapedValue}', '{ApiUrl}', '{containerId}');
+    initAutocomplete('{autoInputId}', '{hiddenInputId}', '{jsEscapedValue}', '{ApiUrl}', '{containerId}','{AutoCompleteEnabledId}');
 }});
 </script>";
 
-        output.Content.SetHtmlContent(labelHtml + hintHtml + errorHtml + hiddenInputHtml + containerHtml + initScript);
+        output.Content.SetHtmlContent(labelHtml + hintHtml + errorHtml + containerHtml + initScript);
     }
 }

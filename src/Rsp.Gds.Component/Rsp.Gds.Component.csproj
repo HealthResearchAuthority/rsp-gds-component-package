@@ -8,7 +8,7 @@
 		<StaticWebAssetBasePath>rsp-gds-component</StaticWebAssetBasePath>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PackageId>Rsp.Gds.Component</PackageId>
-		<Version>1.0.10</Version>
+		<Version>1.0.14</Version>
 		<Authors>HRA Technology Team</Authors>
 		<Company>Health Research Authority</Company>
 		<Description>Gds Component package that exposes components.</Description>
