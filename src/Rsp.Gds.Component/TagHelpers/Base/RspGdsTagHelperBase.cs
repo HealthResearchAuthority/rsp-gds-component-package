@@ -232,5 +232,11 @@ public abstract class RspGdsTagHelperBase : TagHelper
         {
             output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
         }
+
+        // Apply any additional attributes
+        foreach (var kvp in AdditionalAttributes)
+        {
+            output.Attributes.SetAttribute(kvp.Key, kvp.Value);
+        }
     }
 }
