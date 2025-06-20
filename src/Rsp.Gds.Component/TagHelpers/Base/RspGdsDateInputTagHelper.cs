@@ -133,7 +133,7 @@ public class RspGdsDateInputTagHelper : RspGdsTagHelperBase
             <div class='govuk-date-input__item'>
                 <div class='govuk-form-group'>
                     <label class='govuk-label govuk-date-input__label' for='{MonthName}'>Month</label>
-                    <select class='govuk-select govuk-date-input__input{(hasError ? " govuk-input--error" : "")}'
+                    <select class='govuk-select govuk-date-input__input{(hasError ? " govuk-select--error" : "")}'
                             id='{MonthName}' name='{MonthName}'>
                         {monthOptions}
                     </select>
