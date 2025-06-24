@@ -1,0 +1,18 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<Target Name="CopyRspGdsStaticFiles" AfterTargets="Build">
+		<ItemGroup>
+			<!-- Static files inside the component library -->
+			<RspGdsFiles Include="$(MSBuildThisFileDirectory)wwwroot\**\*.*" />
+		</ItemGroup>
+
+		<Message Importance="High" Text="Copying @(RspGdsFiles) to $(MSBuildProjectDirectory)\wwwroot" />
+
+		<Copy
+			SourceFiles="@(RspGdsFiles)"
+			DestinationFiles="@(RspGdsFiles->'$(MSBuildProjectDirectory)\wwwroot\%(RecursiveDir)%(Filename)%(Extension)')"
+			SkipUnchangedFiles="true"
+			Condition="@(RspGdsFiles->Count()) != 0" />
+	</Target>
+
+</Project>

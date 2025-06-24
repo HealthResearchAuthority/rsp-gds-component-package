@@ -29,11 +29,11 @@ Follow the steps below:
 1. The `installcredprovider.ps1` has been downloaded in the scripts folder
 1. Alternatively you can download it from [here](https://github.com/microsoft/artifacts-credprovider/blob/master/helpers/installcredprovider.ps1)
 1. Open the Powershell in elevated mode and run the installcredprovider.ps1
-1. The navigate to the directory where the package was generated, usually in the Debug folder e.g. `Rsp.Gds.Component.1.0.10.nupkg`
+1. The navigate to the directory where the package was generated, usually in the Debug folder e.g. `Rsp.Gds.Component.1.0.17.nupkg`
 1. Type the following command to publish the package
 
 	```
-	dotnet nuget push .\Rsp.Gds.Component.1.0.10.nupkg --source https://pkgs.dev.azure.com/FutureIRAS/0e030eb0-cb72-4f42-b99a-26e6544271c3/_packaging/rsp-nuget-feed/nuget/v3/index.json -k iras
+	dotnet nuget push .\Rsp.Gds.Component.1.0.17.nupkg --source https://pkgs.dev.azure.com/FutureIRAS/0e030eb0-cb72-4f42-b99a-26e6544271c3/_packaging/rsp-nuget-feed/nuget/v3/index.json -k iras
 	```
 
 	You must provide an api-key (-k switch) any string would do
