@@ -171,7 +171,7 @@ public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
         // Build final fieldset HTML
         var fieldsetHtml = $@"
             <govuk-fieldset>
-                <govuk-fieldset-legend class='{LegendClass}'>
+                <govuk-fieldset-legend class='{LegendClass} {LabelCssClass}'>
                     {LabelText ?? propertyName}
                 </govuk-fieldset-legend>
                 {hintHtml}

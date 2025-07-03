@@ -90,11 +90,12 @@ public class RspGdsInputTagHelper : RspGdsTagHelperBase
         var labelAriaDescribedBy = !string.IsNullOrEmpty(LabelAriaDescribedBy) ? LabelAriaDescribedBy : propertyName;
         var hintId = !string.IsNullOrEmpty(HintId) ? HintId : propertyName;
 
-        var labelHtml = $@"
-    <label class='govuk-label govuk-label--s' for='{fieldId}' aria-describedby='{labelAriaDescribedBy}'>
-        {LabelText ?? propertyName}
-    </label>";
+    //    var labelHtml = $@"
+    //<label class='govuk-label govuk-label--s' for='{fieldId}' aria-describedby='{labelAriaDescribedBy}'>
+    //    {LabelText ?? propertyName}
+    //</label>";
 
+        var labelHtml = BuildLabelHtml(propertyName, propertyName, fieldId);
         var hintHtml = BuildHintHtml(fieldId);
         var errorHtml = BuildErrorHtml(propertyName);
 

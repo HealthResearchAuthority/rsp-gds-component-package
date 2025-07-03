@@ -86,11 +86,7 @@ public class RspGdsTextareaTagHelper : RspGdsTagHelperBase
 
         var errorHtml = BuildErrorHtml(propertyName);
         var hintHtml = BuildHintHtml(fieldId);
-
-        var labelHtml = $@"
-            <label class='govuk-label govuk-label--s' for='{propertyName}'>
-                {LabelText ?? propertyName}
-            </label>";
+        var labelHtml = BuildLabelHtml(propertyName, propertyName, fieldId);
 
         var textareaHtml = GetTextareaHtml(hasError, propertyName);
 
