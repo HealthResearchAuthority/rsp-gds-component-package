@@ -105,6 +105,11 @@ public abstract class RspGdsTagHelperBase : TagHelper
     [HtmlAttributeName("additional-attributes")]
     public IDictionary<string, string> AdditionalAttributes { get; set; } = new Dictionary<string, string>();
 
+    /// <summary>
+    /// Optional additional CSS class(es) for the label element.
+    /// </summary>
+    [HtmlAttributeName("label-html-class")]
+    public string LabelHtmlClass { get; set; }
 
     /// <summary>
     ///     ViewContext for model state and validation.
@@ -180,8 +185,14 @@ public abstract class RspGdsTagHelperBase : TagHelper
 
         var encodedLabel = HtmlEncoder.Default.Encode(LabelText ?? propertyName);
 
+        var labelClass = "govuk-label govuk-label--s";
+        if (!string.IsNullOrWhiteSpace(LabelHtmlClass))
+        {
+            labelClass += $" {LabelHtmlClass}";
+        }
+
         return $@"
-<label class='govuk-label govuk-label--s' for='{autoInputId}' aria-describedby='{describedById}' style='display:none'>{encodedLabel}</label>";
+<label class='{labelClass}' for='{autoInputId}' aria-describedby='{describedById}'>{encodedLabel}</label>";
     }
 
     /// <summary>

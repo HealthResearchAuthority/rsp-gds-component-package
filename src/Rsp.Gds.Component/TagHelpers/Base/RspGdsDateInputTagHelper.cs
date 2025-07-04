@@ -61,7 +61,7 @@ public class RspGdsDateInputTagHelper : RspGdsTagHelperBase
         SetContainerAttributes(output, propertyName);
 
         var hasError = HasError(propertyName);
-        var labelHtml = $@"<label class='govuk-label' for='{propertyName}'>{HtmlEncoder.Default.Encode(LabelText ?? propertyName)}</label>";
+        var labelHtml = BuildLabelHtml(propertyName, propertyName, fieldId);
         var hintHtml = BuildHintHtml(fieldId);
         var errorHtml = BuildErrorHtml(propertyName);
 

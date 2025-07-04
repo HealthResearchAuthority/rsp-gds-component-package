@@ -118,7 +118,7 @@ public class RspGdsCheckboxGroupTagHelper : RspGdsTagHelperBase
 
         output.Content.SetHtmlContent($@"
 <govuk-fieldset>
-    <govuk-fieldset-legend class='{LegendClass}'>
+    <govuk-fieldset-legend class='{LegendClass} {LabelCssClass}'>
         {LabelText}
     </govuk-fieldset-legend>
     {hintHtml}
