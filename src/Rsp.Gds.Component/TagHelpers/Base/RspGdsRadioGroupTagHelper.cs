@@ -88,7 +88,7 @@ public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
 
         // Compose form group class
         var formGroupClass = "govuk-form-group"
-                             + (ConditionalField ? " conditional govuk-radios__conditional" : "")
+                             + (ConditionalField ? " conditional" : "")
                              + (hasError ? " govuk-form-group--error" : "");
 
         // Configure output container
