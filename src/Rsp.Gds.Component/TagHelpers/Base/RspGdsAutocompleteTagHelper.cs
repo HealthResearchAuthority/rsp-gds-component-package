@@ -61,7 +61,7 @@ public class RspGdsAutocompleteTagHelper : RspGdsTagHelperBase
 
         var initScript = $@"<script>
 document.addEventListener('DOMContentLoaded', function () {{
-    initAutocomplete('{autoInputId}', '{hiddenInputId}', '{jsEscapedValue}', '{ApiUrl}', '{containerId}','{AutoCompleteEnabledId}','{useOrganisationId}');
+    initAutocomplete('{autoInputId}', '{hiddenInputId}', '{jsEscapedValue}', '{ApiUrl}', '{containerId}','{AutoCompleteEnabledId}',{useOrganisationId});
 }});
 </script>";
 
