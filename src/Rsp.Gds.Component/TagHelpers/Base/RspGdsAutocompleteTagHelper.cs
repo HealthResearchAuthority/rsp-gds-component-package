@@ -25,6 +25,18 @@ public class RspGdsAutocompleteTagHelper : RspGdsTagHelperBase
     [HtmlAttributeName("auto-complete-enabled-id")]
     public string AutoCompleteEnabledId { get; set; }
 
+    /// <summary>
+    /// Flag, to indicate if initAutocomplete should use names or ids of organisations
+    /// </summary>
+    [HtmlAttributeName("use-organisation-id")]
+    public bool UseOrganisationId { get; set; } = false;
+
+    /// <summary>
+    /// Name organisation name to be displayed in UseOrganisationId scenario
+    /// </summary>
+    [HtmlAttributeName("display-name")]
+    public string? DisplayName { get; set; } = null;
+
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         var propertyName = For.Name;
@@ -33,6 +45,8 @@ public class RspGdsAutocompleteTagHelper : RspGdsTagHelperBase
         var autoInputId = fieldId + "_autocomplete";
         var containerId = fieldId + "_autocomplete_container";
         var value = For.Model?.ToString() ?? string.Empty;
+        var useOrganisationId = UseOrganisationId.ToString().ToLower();
+        var displayValue = DisplayName ?? value;
 
         SetContainerAttributes(output, propertyName);
 
@@ -41,13 +55,13 @@ public class RspGdsAutocompleteTagHelper : RspGdsTagHelperBase
         var errorHtml = BuildErrorHtml(propertyName);
 
         // Escape JS value for single-quoted string
-        var jsEscapedValue = value.Replace("\\", "\\\\").Replace("'", "\\'");
+        var jsEscapedValue = displayValue.Replace("\\", "\\\\").Replace("'", "\\'");
 
         var containerHtml = $"<div id='{containerId}'></div>";
 
         var initScript = $@"<script>
 document.addEventListener('DOMContentLoaded', function () {{
-    initAutocomplete('{autoInputId}', '{hiddenInputId}', '{jsEscapedValue}', '{ApiUrl}', '{containerId}','{AutoCompleteEnabledId}');
+    initAutocomplete('{autoInputId}', '{hiddenInputId}', '{jsEscapedValue}', '{ApiUrl}', '{containerId}','{AutoCompleteEnabledId}',{useOrganisationId});
 }});
 </script>";
 

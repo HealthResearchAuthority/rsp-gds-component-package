@@ -44,6 +44,8 @@
                 For = CreateModelExpression("Organisation", "Health Org"),
                 LabelText = "Organisation",
                 ApiUrl = "/api/organisations",
+                UseOrganisationId = true,
+                DisplayName = "Displayed Org",
                 ViewContext = CreateViewContext("Organisation")
             };
 
@@ -58,6 +60,8 @@
             label.InnerHtml.ShouldContain("Organisation");
 
             html.ShouldContain("initAutocomplete");
+            html.ShouldContain("true");
+            html.ShouldContain("Displayed Org");
         }
 
         [Fact]
