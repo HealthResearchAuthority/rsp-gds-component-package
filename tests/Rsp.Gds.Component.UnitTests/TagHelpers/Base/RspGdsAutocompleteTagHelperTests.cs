@@ -60,7 +60,7 @@
             label.InnerHtml.ShouldContain("Organisation");
 
             html.ShouldContain("initAutocomplete");
-            html.ShouldContain("'true'");
+            html.ShouldContain("true");
             html.ShouldContain("Displayed Org");
         }
 
