@@ -103,7 +103,7 @@ function initAutocomplete
                     const query = $(`#${autoCompleteInputId}`).val(); // Get the current input value.
                     const escapedQuery = RegExp.escape(query); // Escape special characters in the query string.
                     let regex = new RegExp('(' + escapedQuery + ')', 'gi'); // Highlight matching text in suggestions.
-                    return suggestion.name.replace(regex, '<strong>$1</strong>'); // Wrap matches in <strong> tags.
+                    return suggestion.replace(regex, '<strong>$1</strong>'); // Wrap matches in <strong> tags.
                 }
 
                 $(".autocomplete__menu").attr('data-before-suggestions', ''); // Clear message before suggestions.
