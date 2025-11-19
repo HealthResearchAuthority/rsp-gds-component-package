@@ -56,12 +56,10 @@ public class RspGdsDateInputTagHelper : RspGdsTagHelperBase
     {
         var propertyName = For.Name;
         var fieldId = !string.IsNullOrEmpty(FieldId) ? FieldId : propertyName.Replace(".", "_");
-        var containerId = !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : propertyName;
 
         SetContainerAttributes(output, propertyName);
 
         var hasError = HasError(propertyName);
-        var labelHtml = BuildLabelHtml(propertyName, propertyName, fieldId);
         var hintHtml = BuildHintHtml(fieldId);
         var errorHtml = BuildErrorHtml(propertyName);
 
@@ -76,7 +74,16 @@ public class RspGdsDateInputTagHelper : RspGdsTagHelperBase
                 {yearInput}
             </div>";
 
-        output.Content.SetHtmlContent(labelHtml + hintHtml + errorHtml + dateGroupHtml);
+        var finalOutput = $@"<fieldset class=""govuk-fieldset"">
+                                <legend class=""govuk-fieldset__legend govuk-fieldset__legend--s"">
+                                    {LabelText}
+                                </legend>
+                                {hintHtml}
+                                {errorHtml}
+                                {dateGroupHtml}
+                            </fieldset>";
+
+        output.Content.SetHtmlContent(finalOutput);
     }
 
     private string BuildDayInput(bool hasError)

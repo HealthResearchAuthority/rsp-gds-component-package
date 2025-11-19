@@ -29,7 +29,6 @@ public class RspGdsCheckboxGroupTagHelper : RspGdsTagHelperBase
     ///     An optional CSS class applied for conditional display logic.
     /// </summary>
     [HtmlAttributeName("conditional-class")]
-
     public string ConditionalClass { get; set; }
 
     [HtmlAttributeName("legend-class")]
@@ -117,15 +116,15 @@ public class RspGdsCheckboxGroupTagHelper : RspGdsTagHelperBase
         output.Attributes.SetAttribute("id", !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : propertyName);
 
         output.Content.SetHtmlContent($@"
-<govuk-fieldset>
-    <govuk-fieldset-legend class='{LegendClass} {LabelCssClass}'>
-        {LabelText}
-    </govuk-fieldset-legend>
-    {hintHtml}
-    {errorHtml}
-    <div class='govuk-checkboxes' data-module='govuk-checkboxes' id='{propertyName}_checkboxes'>
-        {string.Join("\n", checkboxesHtml)}
-    </div>
-</govuk-fieldset>");
+            <fieldset class=""govuk-fieldset"">
+                <legend class='{LegendClass} {LabelCssClass}'>
+                    {LabelText}
+                </legend>
+                {hintHtml}
+                {errorHtml}
+                <div class='govuk-checkboxes' data-module='govuk-checkboxes' id='{propertyName}_checkboxes'>
+                    {string.Join("\n", checkboxesHtml)}
+                </div>
+            </fieldset>");
     }
 }

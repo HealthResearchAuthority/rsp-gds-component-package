@@ -1,16 +1,4 @@
-﻿using HtmlAgilityPack;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using Rsp.Gds.Component.TagHelpers.Base;
-using Shouldly;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
-
-namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
+﻿namespace Rsp.Gds.Component.UnitTests.TagHelpers.Base;
 
 public class RspGdsRadioGroupTagHelperTests
 {
@@ -103,11 +91,10 @@ public class RspGdsRadioGroupTagHelperTests
         checkedRadio.Attributes["value"]?.Value.ShouldBe("yes");
 
         // Ensure the legend contains the label text (not wrapped in <label>)
-        var legend = doc.DocumentNode.SelectSingleNode("//govuk-fieldset-legend");
+        var legend = doc.DocumentNode.SelectSingleNode("//legend");
         legend.ShouldNotBeNull();
         legend.InnerText.ShouldContain("Do you accept?");
     }
-
 
     [Fact]
     public void Process_RendersError_WhenModelStateHasError()
