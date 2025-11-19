@@ -63,85 +63,85 @@ public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
     public ViewContext ViewContext { get; set; }
 
     /// <inheritdoc />
-public override void Process(TagHelperContext context, TagHelperOutput output)
-{
-    // Use full field name so ModelState keys match when using templates/prefixes
-    var fullName = ViewContext?.ViewData?.TemplateInfo?.GetFullHtmlFieldName(For.Name) ?? For.Name;
-
-    // Stable/safe id to anchor hint/error IDs
-    var baseId = !string.IsNullOrEmpty(FieldId) ? FieldId : fullName;
-    var fieldId = TagBuilder.CreateSanitizedId(baseId, "_");
-
-    SetContainerAttributes(output, fullName);
-
-    // Get selected value from model
-    var selectedValue = For.Model switch
+    public override void Process(TagHelperContext context, TagHelperOutput output)
     {
-        string str => str,
-        IEnumerable<string> list => list.FirstOrDefault(),
-        _ => For.Model?.ToString()
-    };
+        // Use full field name so ModelState keys match when using templates/prefixes
+        var fullName = ViewContext?.ViewData?.TemplateInfo?.GetFullHtmlFieldName(For.Name) ?? For.Name;
 
-    // Validation state (lookup by fullName)
-    ViewContext.ViewData.ModelState.TryGetValue(fullName, out var modelStateEntry);
-    var hasError = modelStateEntry?.Errors?.Count > 0;
+        // Stable/safe id to anchor hint/error IDs
+        var baseId = !string.IsNullOrEmpty(FieldId) ? FieldId : fullName;
+        var fieldId = TagBuilder.CreateSanitizedId(baseId, "_");
 
-    // Build hint/error HTML (tie to fieldId so aria-describedby can reference them)
-    var hintHtml = BuildHintHtml(fieldId);
-    var hintId = !string.IsNullOrWhiteSpace(hintHtml) ? $"{fieldId}-hint" : null;
+        SetContainerAttributes(output, fullName);
 
-    var errorHtml = BuildErrorHtml(fullName);
-    if (hasError && string.IsNullOrWhiteSpace(errorHtml))
-    {
-        var firstError = modelStateEntry!.Errors[0].ErrorMessage;
-        errorHtml =
-            $@"<p id=""{fieldId}-error"" class=""govuk-error-message"">
+        // Get selected value from model
+        var selectedValue = For.Model switch
+        {
+            string str => str,
+            IEnumerable<string> list => list.FirstOrDefault(),
+            _ => For.Model?.ToString()
+        };
+
+        // Validation state (lookup by fullName)
+        ViewContext.ViewData.ModelState.TryGetValue(fullName, out var modelStateEntry);
+        var hasError = modelStateEntry?.Errors?.Count > 0;
+
+        // Build hint/error HTML (tie to fieldId so aria-describedby can reference them)
+        var hintHtml = BuildHintHtml(fieldId);
+        var hintId = !string.IsNullOrWhiteSpace(hintHtml) ? $"{fieldId}-hint" : null;
+
+        var errorHtml = BuildErrorHtml(fullName);
+        if (hasError && string.IsNullOrWhiteSpace(errorHtml))
+        {
+            var firstError = modelStateEntry!.Errors[0].ErrorMessage;
+            errorHtml =
+                $@"<p id=""{fieldId}-error"" class=""govuk-error-message"">
                   <span class=""govuk-visually-hidden"">Error:</span> {HtmlEncoder.Default.Encode(firstError)}
                </p>";
-    }
-    var errorId = hasError ? $"{fieldId}-error" : null;
+        }
+        var errorId = hasError ? $"{fieldId}-error" : null;
 
-    var formGroupClass = "govuk-form-group"
-                         + (ConditionalField ? " conditional" : "")
-                         + (hasError ? " govuk-form-group--error" : "");
+        var formGroupClass = "govuk-form-group"
+                             + (ConditionalField ? " conditional" : "")
+                             + (hasError ? " govuk-form-group--error" : "");
 
-    // Container
-    output.TagName = "div";
-    output.TagMode = TagMode.StartTagAndEndTag;
-    output.Attributes.SetAttribute("class", formGroupClass);
-    output.Attributes.SetAttribute("id", !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : fieldId);
+        // Container
+        output.TagName = "div";
+        output.TagMode = TagMode.StartTagAndEndTag;
+        output.Attributes.SetAttribute("class", formGroupClass);
+        output.Attributes.SetAttribute("id", !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : fieldId);
 
-    if (!string.IsNullOrWhiteSpace(DataParentsAttr))
-        output.Attributes.SetAttribute("data-parents", DataParentsAttr);
+        if (!string.IsNullOrWhiteSpace(DataParentsAttr))
+            output.Attributes.SetAttribute("data-parents", DataParentsAttr);
 
-    if (!string.IsNullOrWhiteSpace(DataQuestionIdAttr))
-        output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
+        if (!string.IsNullOrWhiteSpace(DataQuestionIdAttr))
+            output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
 
-    // Parse hidden props
-    var hiddenProps = (ItemHiddenProperties ?? "")
-        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-        .ToList();
+        // Parse hidden props
+        var hiddenProps = (ItemHiddenProperties ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
 
-    // Radios
-    var radiosHtmlBuilder = new StringBuilder();
-    var index = 0;
+        // Radios
+        var radiosHtmlBuilder = new StringBuilder();
+        var index = 0;
 
-    // Shared described-by for the group
-    var describedBy = string.Join(" ", new[] { hintId, errorId }.Where(s => !string.IsNullOrEmpty(s)));
+        // Shared described-by for the group
+        var describedBy = string.Join(" ", new[] { hintId, errorId }.Where(s => !string.IsNullOrEmpty(s)));
 
-    foreach (var option in Options ?? Enumerable.Empty<GdsOption>())
-    {
-        var safeVal = option.Value ?? string.Empty;
-        var idBase = string.IsNullOrWhiteSpace(QuestionId) ? fieldId : QuestionId;
-        var inputId = $"{idBase}_{TagBuilder.CreateSanitizedId(safeVal, "_")}";
+        foreach (var option in Options ?? Enumerable.Empty<GdsOption>())
+        {
+            var safeVal = option.Value ?? string.Empty;
+            var idBase = string.IsNullOrWhiteSpace(QuestionId) ? fieldId : QuestionId;
+            var inputId = $"{idBase}_{TagBuilder.CreateSanitizedId(safeVal, "_")}";
 
-        var isChecked = string.Equals(
-            selectedValue?.Trim(),
-            option.Value?.Trim(),
-            StringComparison.OrdinalIgnoreCase
-        );
+            var isChecked = string.Equals(
+                selectedValue?.Trim(),
+                option.Value?.Trim(),
+                StringComparison.OrdinalIgnoreCase
+            );
 
-        var radioHtml = $@"
+            var radioHtml = $@"
         <div class='govuk-radios__item'>
             <input class='govuk-radios__input'
                    id='{inputId}'
@@ -155,49 +155,45 @@ public override void Process(TagHelperContext context, TagHelperOutput output)
                 {option.Label}
             </label>";
 
-        // Per-item hidden inputs
-        if (HiddenModel != null && HiddenModel.Count() > index && hiddenProps.Any())
-        {
-            var modelItem = HiddenModel.ElementAt(index);
-            var modelType = modelItem.GetType();
-
-            foreach (var hiddenProp in hiddenProps)
+            // Per-item hidden inputs
+            if (HiddenModel != null && HiddenModel.Count() > index && hiddenProps.Any())
             {
-                var prop = modelType.GetProperty(hiddenProp);
-                if (prop != null)
+                var modelItem = HiddenModel.ElementAt(index);
+                var modelType = modelItem.GetType();
+
+                foreach (var hiddenProp in hiddenProps)
                 {
-                    var value = prop.GetValue(modelItem)?.ToString() ?? "";
-                    var name = $"{fullName.Replace("SelectedOption", "Answers")}[{index}].{hiddenProp}";
-                    radioHtml += $"\n<input type='hidden' name='{name}' value='{HtmlEncoder.Default.Encode(value)}' />";
+                    var prop = modelType.GetProperty(hiddenProp);
+                    if (prop != null)
+                    {
+                        var value = prop.GetValue(modelItem)?.ToString() ?? "";
+                        var name = $"{fullName.Replace("SelectedOption", "Answers")}[{index}].{hiddenProp}";
+                        radioHtml += $"\n<input type='hidden' name='{name}' value='{HtmlEncoder.Default.Encode(value)}' />";
+                    }
                 }
             }
+
+            radioHtml += "\n</div>";
+            radiosHtmlBuilder.AppendLine(radioHtml);
+            index++;
         }
 
-        radioHtml += "\n</div>";
-        radiosHtmlBuilder.AppendLine(radioHtml);
-        index++;
-    }
+        var radiosHtml = radiosHtmlBuilder.ToString();
+        var radioWrapperClass = !string.IsNullOrWhiteSpace(DivInlineClass) ? DivInlineClass : "govuk-radios";
 
-    var radiosHtml = radiosHtmlBuilder.ToString();
-    var radioWrapperClass = !string.IsNullOrWhiteSpace(DivInlineClass) ? DivInlineClass : "govuk-radios";
-
-    // Final markup (keep your existing elements)
-    var fieldsetHtml = $@"
-            <govuk-fieldset {(string.IsNullOrEmpty(describedBy) ? "" : $@"aria-describedby=""{describedBy}""")}>
-                <govuk-fieldset-legend class='{LegendClass} {LabelCssClass}'>
+        // Final markup (keep your existing elements)
+        var fieldsetHtml = $@"
+            <fieldset class=""govuk-fieldset"" {(string.IsNullOrEmpty(describedBy) ? "" : $@"aria-describedby=""{describedBy}""")}>
+                <legend class='{LegendClass} {LabelCssClass}'>
                     {LabelText ?? fullName}
-                </govuk-fieldset-legend>
+                </legend>
                 {hintHtml}
                 {errorHtml}
                 <div class='{radioWrapperClass}' data-module='{DataModule}'>
                     {radiosHtml}
                 </div>
-            </govuk-fieldset>";
+            </fieldset>";
 
-    output.Content.SetHtmlContent(fieldsetHtml);
-}
-
-
-
-
+        output.Content.SetHtmlContent(fieldsetHtml);
+    }
 }
