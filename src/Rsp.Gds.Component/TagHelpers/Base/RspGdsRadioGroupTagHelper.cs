@@ -65,16 +65,12 @@ public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
     /// <inheritdoc />
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
-        // Use full field name so ModelState keys match when using templates/prefixes
-        var fullName = ViewContext?.ViewData?.TemplateInfo?.GetFullHtmlFieldName(For.Name) ?? For.Name;
+        var propertyName = For.Name;
+        var fieldId = !string.IsNullOrEmpty(FieldId) ? FieldId : propertyName;
 
-        // Stable/safe id to anchor hint/error IDs
-        var baseId = !string.IsNullOrEmpty(FieldId) ? FieldId : fullName;
-        var fieldId = TagBuilder.CreateSanitizedId(baseId, "_");
+        SetContainerAttributes(output, propertyName);
 
-        SetContainerAttributes(output, fullName);
-
-        // Get selected value from model
+        // Get the selected value from the model (string or first from list)
         var selectedValue = For.Model switch
         {
             string str => str,
@@ -82,80 +78,69 @@ public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
             _ => For.Model?.ToString()
         };
 
-        // Validation state (lookup by fullName)
-        ViewContext.ViewData.ModelState.TryGetValue(fullName, out var modelStateEntry);
-        var hasError = modelStateEntry?.Errors?.Count > 0;
+        // Try to get validation state
+        ViewContext.ViewData.ModelState.TryGetValue(propertyName, out var modelStateEntry);
+        var hasError = modelStateEntry != null && modelStateEntry.Errors.Count > 0;
 
-        // Build hint/error HTML (tie to fieldId so aria-describedby can reference them)
+        // Determine error message
+        var errorHtml = BuildErrorHtml(propertyName);
         var hintHtml = BuildHintHtml(fieldId);
         var hintId = !string.IsNullOrWhiteSpace(hintHtml) ? $"{fieldId}-hint" : null;
 
-        var errorHtml = BuildErrorHtml(fullName);
-        if (hasError && string.IsNullOrWhiteSpace(errorHtml))
-        {
-            var firstError = modelStateEntry!.Errors[0].ErrorMessage;
-            errorHtml =
-                $@"<p id=""{fieldId}-error"" class=""govuk-error-message"">
-                  <span class=""govuk-visually-hidden"">Error:</span> {HtmlEncoder.Default.Encode(firstError)}
-               </p>";
-        }
-        var errorId = hasError ? $"{fieldId}-error" : null;
-
+        // Compose form group class
         var formGroupClass = "govuk-form-group"
                              + (ConditionalField ? " conditional" : "")
                              + (hasError ? " govuk-form-group--error" : "");
 
-        // Container
+        // Configure output container
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
         output.Attributes.SetAttribute("class", formGroupClass);
-        output.Attributes.SetAttribute("id", !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : fieldId);
+        output.Attributes.SetAttribute("id", !string.IsNullOrWhiteSpace(HtmlId) ? HtmlId : propertyName);
 
         if (!string.IsNullOrWhiteSpace(DataParentsAttr))
             output.Attributes.SetAttribute("data-parents", DataParentsAttr);
 
         if (!string.IsNullOrWhiteSpace(DataQuestionIdAttr))
+        {
             output.Attributes.SetAttribute("data-questionId", DataQuestionIdAttr);
+        }
 
         // Parse hidden props
         var hiddenProps = (ItemHiddenProperties ?? "")
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Split(',')
+            .Select(p => p.Trim())
+            .Where(p => !string.IsNullOrEmpty(p))
             .ToList();
 
-        // Radios
         var radiosHtmlBuilder = new StringBuilder();
         var index = 0;
 
         // Shared described-by for the group
-        var describedBy = string.Join(" ", new[] { hintId, errorId }.Where(s => !string.IsNullOrEmpty(s)));
+        var describedBy = string.Join(" ", new[] { hintId }.Where(s => !string.IsNullOrEmpty(s)));
 
         foreach (var option in Options ?? Enumerable.Empty<GdsOption>())
         {
-            var safeVal = option.Value ?? string.Empty;
-            var idBase = string.IsNullOrWhiteSpace(QuestionId) ? fieldId : QuestionId;
-            var inputId = $"{idBase}_{TagBuilder.CreateSanitizedId(safeVal, "_")}";
-
+            var inputId = $"{QuestionId}_{option.Value.Replace(" ", "_")}";
             var isChecked = string.Equals(
                 selectedValue?.Trim(),
                 option.Value?.Trim(),
                 StringComparison.OrdinalIgnoreCase
-            );
+            ) ? "checked=\"checked\"" : "";
 
             var radioHtml = $@"
         <div class='govuk-radios__item'>
             <input class='govuk-radios__input'
                    id='{inputId}'
-                   name='{fullName}'
+                   name='{propertyName}'
                    type='radio'
-                   value='{HtmlEncoder.Default.Encode(safeVal)}'
-                   {(isChecked ? "checked=\"checked\"" : "")}
-                   {(hasError ? "aria-invalid=\"true\"" : "")}
-                   {(string.IsNullOrEmpty(describedBy) ? "" : $@"aria-describedby=""{describedBy}""")} />
+                   value='{option.Value}'
+                   {isChecked} />
             <label class='govuk-label govuk-radios__label {LabelCssClass}' for='{inputId}'>
                 {option.Label}
             </label>";
 
-            // Per-item hidden inputs
+            // Render hidden inputs if provided
             if (HiddenModel != null && HiddenModel.Count() > index && hiddenProps.Any())
             {
                 var modelItem = HiddenModel.ElementAt(index);
@@ -167,7 +152,7 @@ public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
                     if (prop != null)
                     {
                         var value = prop.GetValue(modelItem)?.ToString() ?? "";
-                        var name = $"{fullName.Replace("SelectedOption", "Answers")}[{index}].{hiddenProp}";
+                        var name = $"{propertyName.Replace("SelectedOption", "Answers")}[{index}].{hiddenProp}";
                         radioHtml += $"\n<input type='hidden' name='{name}' value='{HtmlEncoder.Default.Encode(value)}' />";
                     }
                 }
@@ -179,13 +164,17 @@ public class RspGdsRadioGroupTagHelper : RspGdsTagHelperBase
         }
 
         var radiosHtml = radiosHtmlBuilder.ToString();
-        var radioWrapperClass = !string.IsNullOrWhiteSpace(DivInlineClass) ? DivInlineClass : "govuk-radios";
 
-        // Final markup (keep your existing elements)
+        // Determine wrapper class (e.g. inline or standard radio list)
+        var radioWrapperClass = !string.IsNullOrWhiteSpace(DivInlineClass)
+            ? DivInlineClass
+            : "govuk-radios";
+
+        // Build final fieldset HTML
         var fieldsetHtml = $@"
             <fieldset class=""govuk-fieldset"" {(string.IsNullOrEmpty(describedBy) ? "" : $@"aria-describedby=""{describedBy}""")}>
                 <legend class='{LegendClass} {LabelCssClass}'>
-                    {LabelText ?? fullName}
+                    {LabelText ?? propertyName}
                 </legend>
                 {hintHtml}
                 {errorHtml}
