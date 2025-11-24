@@ -1,11 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using System.Text;
-using System.Text.Encodings.Web;
-
-namespace Rsp.Gds.Component.TagHelpers.Base;
+﻿namespace Rsp.Gds.Component.TagHelpers.Base;
 
 /// <summary>
 ///     Renders a GOV.UK-styled
@@ -86,7 +79,7 @@ public class RspGdsTextareaTagHelper : RspGdsTagHelperBase
 
         var errorHtml = BuildErrorHtml(propertyName);
         var hintHtml = BuildHintHtml(fieldId);
-        var labelHtml = BuildLabelHtml(propertyName, propertyName, fieldId);
+        var labelHtml = BuildLabelHtml(propertyName, fieldId, fieldId);
 
         var textareaHtml = GetTextareaHtml(hasError, propertyName);
 

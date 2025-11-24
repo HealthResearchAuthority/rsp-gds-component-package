@@ -87,7 +87,7 @@ public class RspGdsInputTagHelper : RspGdsTagHelperBase
             .Where(kvp => !string.IsNullOrEmpty(kvp.Value))
             .Select(kvp => $"{kvp.Key}='{HtmlEncoder.Default.Encode(kvp.Value)}'"));
 
-        var labelHtml = BuildLabelHtml(propertyName, propertyName, fieldId);
+        var labelHtml = BuildLabelHtml(propertyName, fieldId, fieldId);
         var hintHtml = BuildHintHtml(fieldId);
         var errorHtml = BuildErrorHtml(propertyName);
 
