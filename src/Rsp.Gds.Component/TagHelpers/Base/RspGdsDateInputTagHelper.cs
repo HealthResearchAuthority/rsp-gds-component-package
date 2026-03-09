@@ -128,7 +128,7 @@ public class RspGdsDateInputTagHelper : RspGdsTagHelperBase
             selectedMonth = parsed;
         }
 
-        var monthOptions = new StringBuilder("<option value=''>Choose month</option>");
+        var monthOptions = new StringBuilder("<option value=''>Select month</option>");
         for (var i = 0; i < months.Length; i++)
         {
             var monthValue = i + 1;
